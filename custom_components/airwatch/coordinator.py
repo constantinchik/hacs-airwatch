@@ -44,11 +44,11 @@ class AirwatchCoordinator(DataUpdateCoordinator[AirwatchData]):
 
     @property
     def latitude(self) -> float:
-        return float(self.entry.data[CONF_LATITUDE])
+        return float(self.entry.options.get(CONF_LATITUDE, self.entry.data[CONF_LATITUDE]))
 
     @property
     def longitude(self) -> float:
-        return float(self.entry.data[CONF_LONGITUDE])
+        return float(self.entry.options.get(CONF_LONGITUDE, self.entry.data[CONF_LONGITUDE]))
 
     @property
     def radius_km(self) -> float:

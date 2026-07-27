@@ -19,6 +19,7 @@
       "init": {
         "title": "Airwatch options",
         "data": {
+          "location": "Map center",
           "radius_km": "Radius",
           "zoom": "Default zoom",
           "scan_interval_seconds": "Live update interval",

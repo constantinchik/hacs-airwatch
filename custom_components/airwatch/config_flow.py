@@ -86,6 +86,9 @@ class AirwatchOptionsFlow(OptionsFlow):
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
             data = dict(user_input)
+            location = data.pop(CONF_LOCATION)
+            data[CONF_LATITUDE] = float(location[CONF_LATITUDE])
+            data[CONF_LONGITUDE] = float(location[CONF_LONGITUDE])
             data[CONF_AIRPORT_CODE] = _clean_airport_code(data.get(CONF_AIRPORT_CODE))
             return self.async_create_entry(title="", data=data)
 
@@ -95,6 +98,13 @@ class AirwatchOptionsFlow(OptionsFlow):
             step_id="init",
             data_schema=vol.Schema(
                 {
+                    vol.Required(
+                        CONF_LOCATION,
+                        default={
+                            CONF_LATITUDE: opts.get(CONF_LATITUDE, entry.data[CONF_LATITUDE]),
+                            CONF_LONGITUDE: opts.get(CONF_LONGITUDE, entry.data[CONF_LONGITUDE]),
+                        },
+                    ): LocationSelector(LocationSelectorConfig(radius=False, icon="mdi:airplane-marker")),
                     vol.Required(
                         CONF_RADIUS_KM,
                         default=opts.get(CONF_RADIUS_KM, entry.data.get(CONF_RADIUS_KM, DEFAULT_RADIUS_KM)),
