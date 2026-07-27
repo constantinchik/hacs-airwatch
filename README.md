@@ -24,6 +24,11 @@ The frontend bundle registers these custom cards:
 
 Both cards read the same overview entity and use backend services for shared selection state.
 
+The map card is static: it frames the configured location at the configured radius, with all pan/zoom gestures disabled. The list card has two modes:
+
+- `mode: aircraft` (default) — the live aircraft currently on the map, with origin → destination routes; clicking a row selects it (highlight + expanded details, synced with the map marker)
+- `mode: schedules` — airport arrivals/departures sections (use `show: arrivals|departures|both`)
+
 Example Lovelace config:
 
 ```yaml
@@ -33,7 +38,7 @@ cards:
     entity: sensor.airwatch_overview
   - type: custom:airwatch-list-card
     entity: sensor.airwatch_overview
-    show: both
+    mode: aircraft
 ```
 
 ## Architecture

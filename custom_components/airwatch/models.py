@@ -29,6 +29,7 @@ class Aircraft:
     ground_speed_kt: int | None = None
     track_deg: int | None = None
     vertical_rate_fpm: int | None = None
+    on_ground: bool = False
     origin: str | None = None
     destination: str | None = None
     updated_at: str = field(default_factory=utc_now_iso)

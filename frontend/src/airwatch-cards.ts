@@ -30,6 +30,7 @@ export class AirwatchMapCard extends LitElement {
   private _map?: LeafletMap;
   private _markers = new Map<string, Marker>();
   private _resizeObserver?: ResizeObserver;
+  private _fittedView?: string;
 
   public setConfig(config: AirwatchCardConfig): void {
     this._config = { entity: DEFAULT_ENTITY, ...config };
@@ -100,7 +101,10 @@ export class AirwatchMapCard extends LitElement {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(this._map);
-    this._resizeObserver = new ResizeObserver(() => this._map?.invalidateSize());
+    this._resizeObserver = new ResizeObserver(() => {
+      this._map?.invalidateSize();
+      this._fitView(true);
+    });
     this._resizeObserver.observe(container);
     this._renderMarkers();
   }
@@ -112,9 +116,7 @@ export class AirwatchMapCard extends LitElement {
     const selected = attrs.selected_aircraft_id;
     const seen = new Set<string>();
 
-    if (attrs.map) {
-      this._map.setView([attrs.map.latitude, attrs.map.longitude], attrs.map.zoom);
-    }
+    this._fitView();
 
     for (const plane of aircraft) {
       seen.add(plane.id);
@@ -129,6 +131,21 @@ export class AirwatchMapCard extends LitElement {
         marker.remove();
         this._markers.delete(id);
       }
+    }
+  }
+
+  private _fitView(force = false): void {
+    const map = getAttributes(getEntity(this.hass, this._config.entity)).map;
+    if (!this._map || !map) return;
+    const key = `${map.latitude},${map.longitude},${map.radius_km},${map.zoom}`;
+    if (!force && key === this._fittedView) return;
+    this._fittedView = key;
+    if (map.radius_km) {
+      this._map.fitBounds(L.latLng(map.latitude, map.longitude).toBounds(map.radius_km * 2000), {
+        animate: false,
+      });
+    } else {
+      this._map.setView([map.latitude, map.longitude], map.zoom, { animate: false });
     }
   }
 
@@ -163,16 +180,17 @@ export class AirwatchListCard extends LitElement {
   @state() private _config: AirwatchListCardConfig = {
     type: "custom:airwatch-list-card",
     entity: DEFAULT_ENTITY,
+    mode: "aircraft",
     show: "both",
     max_items: 8,
   };
 
   public setConfig(config: AirwatchListCardConfig): void {
-    this._config = { entity: DEFAULT_ENTITY, show: "both", max_items: 8, ...config };
+    this._config = { entity: DEFAULT_ENTITY, mode: "aircraft", show: "both", max_items: 8, ...config };
   }
 
   public static getStubConfig(): AirwatchListCardConfig {
-    return { type: "custom:airwatch-list-card", entity: DEFAULT_ENTITY, show: "both" };
+    return { type: "custom:airwatch-list-card", entity: DEFAULT_ENTITY, mode: "aircraft" };
   }
 
   public getCardSize(): number {
@@ -183,39 +201,74 @@ export class AirwatchListCard extends LitElement {
     const attrs = getAttributes(getEntity(this.hass, this._config.entity));
     const aircraft = attrs.aircraft ?? [];
     const matches = attrs.matches ?? [];
-    const selectedAircraft = aircraft.find((item) => item.id === attrs.selected_aircraft_id);
-    const selectedFlight = [...(attrs.arrivals ?? []), ...(attrs.departures ?? [])].find(
-      (item) => item.id === attrs.selected_flight_id,
-    );
+    const mode = this._config.mode ?? "aircraft";
 
     return html`
       <ha-card>
         <header>
           <div>
-            <h2>${this._config.title || "Airwatch Flights"}</h2>
+            <h2>${this._config.title || (mode === "aircraft" ? "Nearby Aircraft" : "Airport Schedule")}</h2>
             <p>${attrs.last_updated ? `Updated ${new Date(attrs.last_updated).toLocaleTimeString()}` : "Waiting for data"}</p>
           </div>
         </header>
-        ${this._renderSelected(selectedAircraft, selectedFlight)}
-        ${this._config.show !== "departures"
-          ? this._renderSection("Arrivals", attrs.arrivals ?? [], aircraft, matches)
-          : null}
-        ${this._config.show !== "arrivals"
-          ? this._renderSection("Departures", attrs.departures ?? [], aircraft, matches)
-          : null}
+        ${mode === "aircraft"
+          ? this._renderAircraftList(aircraft, attrs.selected_aircraft_id ?? null)
+          : html`
+              ${this._config.show !== "departures"
+                ? this._renderSection("Arrivals", attrs.arrivals ?? [], aircraft, matches, attrs.selected_flight_id ?? null)
+                : null}
+              ${this._config.show !== "arrivals"
+                ? this._renderSection("Departures", attrs.departures ?? [], aircraft, matches, attrs.selected_flight_id ?? null)
+                : null}
+            `}
       </ha-card>
     `;
   }
 
-  private _renderSelected(aircraft?: Aircraft, flight?: ScheduledFlight): TemplateResult | null {
-    if (!aircraft && !flight) return null;
+  private _renderAircraftList(aircraft: Aircraft[], selectedId: string | null): TemplateResult {
+    const sorted = [...aircraft].sort((a, b) => Number(a.on_ground ?? false) - Number(b.on_ground ?? false));
     return html`
-      <section class="selected">
-        <span class="eyebrow">Selected</span>
-        <strong>${flight?.flight_number || aircraft?.callsign || aircraft?.registration || aircraft?.id}</strong>
-        <span>${aircraft ? labelForAircraft(aircraft) : "Scheduled flight"}</span>
+      <section class="list">
+        ${sorted.length
+          ? sorted.slice(0, this._config.max_items).map((plane) => this._renderAircraft(plane, plane.id === selectedId))
+          : html`<div class="empty">No aircraft in range.</div>`}
       </section>
     `;
+  }
+
+  private _renderAircraft(plane: Aircraft, selected: boolean): TemplateResult {
+    const name = plane.callsign || plane.registration || plane.icao24 || plane.id;
+    const status = plane.on_ground
+      ? "on ground"
+      : plane.altitude_ft
+        ? `${plane.altitude_ft.toLocaleString()} ft`
+        : "airborne";
+    return html`
+      <button class="row ${selected ? "selected" : ""}" @click=${() => this._selectAircraft(plane, selected)}>
+        <span class="row-main">
+          <span class="ident">
+            <strong>${name}</strong>
+            <small>${status}</small>
+          </span>
+          ${renderRoute(plane.origin, plane.destination)}
+          <span class="meta">${plane.ground_speed_kt ? `${plane.ground_speed_kt} kt` : ""}</span>
+        </span>
+        ${selected ? renderAircraftDetails(plane) : null}
+      </button>
+    `;
+  }
+
+  private async _selectAircraft(plane: Aircraft, selected: boolean): Promise<void> {
+    if (selected) {
+      await this.hass?.callService("airwatch", "clear_selection");
+      return;
+    }
+    const attrs = getAttributes(getEntity(this.hass, this._config.entity));
+    const match = matchForAircraft(attrs.matches ?? [], plane.id);
+    await this.hass?.callService("airwatch", "select_target", {
+      aircraft_id: plane.id,
+      flight_id: match?.flight_id,
+    });
   }
 
   private _renderSection(
@@ -223,32 +276,42 @@ export class AirwatchListCard extends LitElement {
     flights: ScheduledFlight[],
     aircraft: Aircraft[],
     matches: FlightMatch[],
+    selectedId: string | null,
   ): TemplateResult {
     const sorted = sortFlightsByRelevance(flights).slice(0, this._config.max_items);
     return html`
       <section>
         <h3>${title}</h3>
         ${sorted.length
-          ? sorted.map((flight) => this._renderFlight(flight, aircraftForFlight(aircraft, matches, flight.id)))
+          ? sorted.map((flight) =>
+              this._renderFlight(flight, aircraftForFlight(aircraft, matches, flight.id), flight.id === selectedId),
+            )
           : html`<div class="empty">No ${title.toLowerCase()} available.</div>`}
       </section>
     `;
   }
 
-  private _renderFlight(flight: ScheduledFlight, aircraft?: Aircraft): TemplateResult {
+  private _renderFlight(flight: ScheduledFlight, aircraft: Aircraft | undefined, selected: boolean): TemplateResult {
     return html`
-      <button class="flight" @click=${() => this._selectFlight(flight, aircraft)}>
-        <span class="time">${displayTime(flight)}</span>
-        <span class="main">
-          <strong>${flight.flight_number}</strong>
-          <small>${flight.status || "unknown"}${aircraft ? " · live" : ""}</small>
+      <button class="row ${selected ? "selected" : ""}" @click=${() => this._selectFlight(flight, aircraft, selected)}>
+        <span class="row-main flight">
+          <span class="time">${displayTime(flight)}</span>
+          <span class="ident">
+            <strong>${flight.flight_number}</strong>
+            <small>${flight.status || "unknown"}${aircraft ? " · live" : ""}</small>
+          </span>
+          <span class="meta">${flight.terminal ? `T${flight.terminal}` : ""}${flight.gate ? ` · ${flight.gate}` : ""}</span>
         </span>
-        <span class="meta">${flight.terminal ? `T${flight.terminal}` : ""}${flight.gate ? ` · ${flight.gate}` : ""}</span>
+        ${selected ? renderFlightDetails(flight, aircraft) : null}
       </button>
     `;
   }
 
-  private async _selectFlight(flight: ScheduledFlight, aircraft?: Aircraft): Promise<void> {
+  private async _selectFlight(flight: ScheduledFlight, aircraft: Aircraft | undefined, selected: boolean): Promise<void> {
+    if (selected) {
+      await this.hass?.callService("airwatch", "clear_selection");
+      return;
+    }
     await this.hass?.callService("airwatch", "select_target", {
       flight_id: flight.id,
       aircraft_id: aircraft?.id,
@@ -262,8 +325,11 @@ export class AirwatchListCard extends LitElement {
 
 function aircraftIcon(plane: Aircraft, selected: boolean): L.DivIcon {
   const rotation = plane.track_deg ?? 0;
+  const classes = ["airwatch-marker", selected ? "selected" : "", plane.on_ground ? "grounded" : ""]
+    .filter(Boolean)
+    .join(" ");
   return L.divIcon({
-    className: selected ? "airwatch-marker selected" : "airwatch-marker",
+    className: classes,
     html: `<div style="transform: rotate(${rotation}deg)">✈</div>`,
     iconSize: [28, 28],
     iconAnchor: [14, 14],
@@ -273,8 +339,63 @@ function aircraftIcon(plane: Aircraft, selected: boolean): L.DivIcon {
 function labelForAircraft(plane: Aircraft): string {
   const name = plane.callsign || plane.registration || plane.icao24 || plane.id;
   const route = plane.origin && plane.destination ? ` · ${plane.origin} to ${plane.destination}` : "";
-  const altitude = plane.altitude_ft ? ` · ${plane.altitude_ft.toLocaleString()} ft` : "";
+  const altitude = plane.on_ground
+    ? " · on ground"
+    : plane.altitude_ft
+      ? ` · ${plane.altitude_ft.toLocaleString()} ft`
+      : "";
   return `${name}${route}${altitude}`;
+}
+
+function renderRoute(origin?: string | null, destination?: string | null): TemplateResult {
+  return html`
+    <span class="route">
+      <span>${origin || "···"}</span>
+      <svg class="route-arrow" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 12h14m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span>${destination || "···"}</span>
+    </span>
+  `;
+}
+
+function renderAircraftDetails(plane: Aircraft): TemplateResult {
+  const items: Array<[string, string]> = [];
+  if (plane.registration) items.push(["Registration", plane.registration]);
+  if (plane.icao24) items.push(["ICAO24", plane.icao24.toUpperCase()]);
+  if (plane.altitude_ft != null) {
+    items.push(["Altitude", plane.on_ground ? "On ground" : `${plane.altitude_ft.toLocaleString()} ft`]);
+  }
+  if (plane.ground_speed_kt != null) items.push(["Speed", `${plane.ground_speed_kt} kt`]);
+  if (plane.track_deg != null) items.push(["Heading", `${plane.track_deg}°`]);
+  if (plane.vertical_rate_fpm) {
+    items.push(["Vertical", `${plane.vertical_rate_fpm > 0 ? "+" : ""}${plane.vertical_rate_fpm} fpm`]);
+  }
+  return renderDetails(items);
+}
+
+function renderFlightDetails(flight: ScheduledFlight, aircraft?: Aircraft): TemplateResult {
+  const items: Array<[string, string]> = [["Scheduled", formatClock(flight.scheduled_time)]];
+  if (flight.estimated_time) items.push(["Estimated", formatClock(flight.estimated_time)]);
+  if (flight.actual_time) items.push(["Actual", formatClock(flight.actual_time)]);
+  if (flight.terminal) items.push(["Terminal", flight.terminal]);
+  if (flight.gate) items.push(["Gate", flight.gate]);
+  if (aircraft) items.push(["Live aircraft", aircraft.callsign || aircraft.registration || aircraft.id]);
+  return renderDetails(items);
+}
+
+function renderDetails(items: Array<[string, string]>): TemplateResult {
+  return html`
+    <span class="details">
+      ${items.map(([label, value]) => html`<span class="detail"><small>${label}</small>${value}</span>`)}
+    </span>
+  `;
+}
+
+function formatClock(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(date);
 }
 
 function cardStyles() {
@@ -320,8 +441,7 @@ function cardStyles() {
   p,
   small,
   .empty,
-  .meta,
-  .selected span {
+  .meta {
     color: var(--secondary-text-color);
   }
 
@@ -343,39 +463,66 @@ function cardStyles() {
     min-height: 320px;
   }
 
-  .selected {
-    background: linear-gradient(135deg, rgba(3, 169, 244, 0.16), rgba(63, 81, 181, 0.14));
-    border: 1px solid rgba(3, 169, 244, 0.24);
-    border-radius: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin: 6px 16px 4px;
-    padding: 14px;
+  .list {
+    padding-bottom: 4px;
   }
 
-  .eyebrow {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .flight {
-    align-items: center;
+  .row {
     background: transparent;
     border-top: 1px solid var(--divider-color);
     color: var(--primary-text-color);
-    display: grid;
-    gap: 12px;
-    grid-template-columns: 58px 1fr auto;
+    display: block;
     padding: 12px 16px;
     text-align: left;
+    transition: background 0.15s ease;
     width: 100%;
   }
 
-  .flight:hover {
+  .row:hover {
     background: var(--secondary-background-color);
+  }
+
+  .row.selected {
+    background: rgba(3, 169, 244, 0.08);
+    box-shadow: inset 3px 0 0 var(--primary-color, #03a9f4);
+  }
+
+  .row-main {
+    align-items: center;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: minmax(90px, 1fr) auto minmax(48px, auto);
+  }
+
+  .row-main.flight {
+    grid-template-columns: 58px 1fr auto;
+  }
+
+  .ident {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .route {
+    align-items: center;
+    display: inline-flex;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    gap: 6px;
+    letter-spacing: 0.02em;
+  }
+
+  .route-arrow {
+    color: var(--secondary-text-color);
+    height: 14px;
+    width: 14px;
+  }
+
+  .meta {
+    justify-self: end;
+    text-align: right;
   }
 
   .time {
@@ -383,11 +530,26 @@ function cardStyles() {
     font-weight: 700;
   }
 
-  .main {
+  .details {
+    display: grid;
+    gap: 10px 14px;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    margin-top: 12px;
+  }
+
+  .detail {
     display: flex;
     flex-direction: column;
+    font-weight: 600;
     gap: 2px;
-    min-width: 0;
+  }
+
+  .detail small {
+    color: var(--secondary-text-color);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
   .empty {
@@ -406,6 +568,10 @@ function cardStyles() {
     height: 28px;
     justify-content: center;
     width: 28px;
+  }
+
+  .airwatch-marker.grounded {
+    background: #78909c;
   }
 
   .airwatch-marker.selected {

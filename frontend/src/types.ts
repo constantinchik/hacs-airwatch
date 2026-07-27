@@ -5,6 +5,7 @@ export interface AirwatchCardConfig {
 }
 
 export interface AirwatchListCardConfig extends AirwatchCardConfig {
+  mode?: "aircraft" | "schedules";
   show?: "arrivals" | "departures" | "both";
   max_items?: number;
 }
@@ -50,6 +51,7 @@ export interface Aircraft {
   ground_speed_kt?: number | null;
   track_deg?: number | null;
   vertical_rate_fpm?: number | null;
+  on_ground?: boolean;
   origin?: string | null;
   destination?: string | null;
   updated_at?: string;

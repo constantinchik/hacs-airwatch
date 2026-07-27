@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from functools import partial
+
 from .const import DOMAIN, SERVICE_CLEAR_SELECTION, SERVICE_SELECT
 
 PLATFORMS = ["sensor"]
@@ -16,9 +18,9 @@ async def async_setup_entry(hass, entry) -> bool:
     entry.runtime_data = coordinator
 
     if not hass.services.has_service(DOMAIN, SERVICE_SELECT):
-        hass.services.async_register(DOMAIN, SERVICE_SELECT, _handle_select_target)
+        hass.services.async_register(DOMAIN, SERVICE_SELECT, partial(_handle_select_target, hass))
     if not hass.services.has_service(DOMAIN, SERVICE_CLEAR_SELECTION):
-        hass.services.async_register(DOMAIN, SERVICE_CLEAR_SELECTION, _handle_clear_selection)
+        hass.services.async_register(DOMAIN, SERVICE_CLEAR_SELECTION, partial(_handle_clear_selection, hass))
 
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -35,20 +37,24 @@ async def _async_update_listener(hass, entry) -> None:
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def _handle_select_target(call) -> None:
-    entry_id = call.data.get("entry_id")
-    for entry in call.hass.config_entries.async_entries(DOMAIN):
-        if entry_id and entry.entry_id != entry_id:
-            continue
-        await entry.runtime_data.async_select_target(
+async def _handle_select_target(hass, call) -> None:
+    for coordinator in _target_coordinators(hass, call):
+        await coordinator.async_select_target(
             aircraft_id=call.data.get("aircraft_id"),
             flight_id=call.data.get("flight_id"),
         )
 
 
-async def _handle_clear_selection(call) -> None:
+async def _handle_clear_selection(hass, call) -> None:
+    for coordinator in _target_coordinators(hass, call):
+        await coordinator.async_clear_selection()
+
+
+def _target_coordinators(hass, call):
     entry_id = call.data.get("entry_id")
-    for entry in call.hass.config_entries.async_entries(DOMAIN):
+    for entry in hass.config_entries.async_entries(DOMAIN):
         if entry_id and entry.entry_id != entry_id:
             continue
-        await entry.runtime_data.async_clear_selection()
+        coordinator = getattr(entry, "runtime_data", None)
+        if coordinator is not None:
+            yield coordinator

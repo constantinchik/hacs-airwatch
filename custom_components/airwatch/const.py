@@ -13,7 +13,7 @@ CONF_RADIUS_KM: Final = "radius_km"
 CONF_SCAN_INTERVAL_SECONDS: Final = "scan_interval_seconds"
 CONF_ZOOM: Final = "zoom"
 
-DEFAULT_RADIUS_KM: Final = 50.0
+DEFAULT_RADIUS_KM: Final = 3.0
 DEFAULT_SCAN_INTERVAL_SECONDS: Final = 15
 DEFAULT_ZOOM: Final = 9
 

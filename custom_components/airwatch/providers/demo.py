@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from math import cos, radians
 
 from ..models import Aircraft, ScheduledFlight
 from ..provider import AirwatchProvider
@@ -16,32 +17,50 @@ class DemoProvider(AirwatchProvider):
     async def async_get_aircraft(
         self, *, latitude: float, longitude: float, radius_km: float
     ) -> list[Aircraft]:
+        # Scale offsets to the configured radius so demo traffic always stays in view.
+        dlat = radius_km / 111.0
+        dlon = radius_km / (111.0 * max(cos(radians(latitude)), 0.2))
         return [
             Aircraft(
                 id="demo-baw123",
                 icao24="400001",
                 callsign="BAW123",
                 registration="G-DEMO",
-                latitude=latitude + 0.08,
-                longitude=longitude - 0.12,
-                altitude_ft=12750,
-                ground_speed_kt=284,
-                track_deg=82,
+                latitude=latitude + 0.45 * dlat,
+                longitude=longitude - 0.40 * dlon,
+                altitude_ft=2750,
+                ground_speed_kt=184,
+                track_deg=132,
                 vertical_rate_fpm=-640,
-                origin="AMS",
-                destination="LHR",
+                origin="YOW",
+                destination="YTZ",
             ),
             Aircraft(
                 id="demo-ezy42",
                 icao24="400002",
                 callsign="EZY42",
-                latitude=latitude - 0.14,
-                longitude=longitude + 0.16,
-                altitude_ft=22100,
-                ground_speed_kt=410,
+                latitude=latitude - 0.60 * dlat,
+                longitude=longitude + 0.70 * dlon,
+                altitude_ft=6100,
+                ground_speed_kt=252,
                 track_deg=245,
-                origin="LHR",
-                destination="EDI",
+                vertical_rate_fpm=1450,
+                origin="YTZ",
+                destination="EWR",
+            ),
+            Aircraft(
+                id="demo-pd456",
+                icao24="400003",
+                callsign="POE456",
+                registration="C-GDMO",
+                latitude=latitude + 0.04 * dlat,
+                longitude=longitude + 0.06 * dlon,
+                altitude_ft=0,
+                ground_speed_kt=4,
+                track_deg=60,
+                on_ground=True,
+                origin="YTZ",
+                destination="YHZ",
             ),
         ]
 
@@ -72,5 +91,17 @@ class DemoProvider(AirwatchProvider):
                 status="airborne",
                 terminal="2",
                 gate="B4",
+            ),
+            ScheduledFlight(
+                id="demo-departure-pd456",
+                flight_number="PD456",
+                callsign="POE456",
+                direction="departure",
+                airport=airport,
+                scheduled_time=(now + timedelta(minutes=34)).isoformat(),
+                status="scheduled",
+                terminal="1",
+                gate="C7",
+                aircraft_registration="C-GDMO",
             ),
         ]
