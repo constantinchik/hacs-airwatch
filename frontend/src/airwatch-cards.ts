@@ -1,7 +1,7 @@
-import "leaflet/dist/leaflet.css";
+import leafletCss from "leaflet/dist/leaflet.css?inline";
 import * as L from "leaflet";
 import type { Map as LeafletMap, Marker } from "leaflet";
-import { LitElement, css, html, type TemplateResult } from "lit";
+import { LitElement, css, html, unsafeCSS, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   aircraftForFlight,
@@ -29,6 +29,7 @@ export class AirwatchMapCard extends LitElement {
   @state() private _config: AirwatchCardConfig = { type: "custom:airwatch-map-card", entity: DEFAULT_ENTITY };
   private _map?: LeafletMap;
   private _markers = new Map<string, Marker>();
+  private _resizeObserver?: ResizeObserver;
 
   public setConfig(config: AirwatchCardConfig): void {
     this._config = { entity: DEFAULT_ENTITY, ...config };
@@ -47,7 +48,17 @@ export class AirwatchMapCard extends LitElement {
   }
 
   protected updated(): void {
+    this._ensureMap();
     this._renderMarkers();
+  }
+
+  public override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this._resizeObserver?.disconnect();
+    this._resizeObserver = undefined;
+    this._map?.remove();
+    this._map = undefined;
+    this._markers.clear();
   }
 
   protected render(): TemplateResult {
@@ -77,10 +88,20 @@ export class AirwatchMapCard extends LitElement {
     if (!container) return;
     const attrs = getAttributes(getEntity(this.hass, this._config.entity));
     const center: [number, number] = [attrs.map?.latitude ?? 0, attrs.map?.longitude ?? 0];
-    this._map = L.map(container, { zoomControl: true }).setView(center, attrs.map?.zoom ?? 9);
+    this._map = L.map(container, {
+      zoomControl: false,
+      dragging: false,
+      touchZoom: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      boxZoom: false,
+      keyboard: false,
+    }).setView(center, attrs.map?.zoom ?? 9);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(this._map);
+    this._resizeObserver = new ResizeObserver(() => this._map?.invalidateSize());
+    this._resizeObserver.observe(container);
     this._renderMarkers();
   }
 
@@ -132,7 +153,7 @@ export class AirwatchMapCard extends LitElement {
   }
 
   static override get styles() {
-    return cardStyles();
+    return [unsafeCSS(leafletCss), cardStyles()];
   }
 }
 
