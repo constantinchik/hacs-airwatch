@@ -812,8 +812,7 @@ function cardStyles() {
   .airwatch-marker.selected path {
     fill: var(--aw-sel);
     opacity: 1;
-    stroke: var(--aw-out);
-    stroke-width: 1;
+    stroke: none;
   }
 
   .airwatch-marker.selected .halo {
