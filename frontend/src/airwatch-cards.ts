@@ -78,7 +78,11 @@ export class AirwatchMapCard extends LitElement {
         <header>
           <div>
             <h2>${this._config.title || "Airwatch Map"}</h2>
-            <p>${count} aircraft nearby${label ? ` · ${label}` : ""}${this._paused ? " · paused" : ""}</p>
+            <p>
+              ${entity && entity.state === "unavailable"
+                ? "Provider unavailable — check Home Assistant logs"
+                : `${count} aircraft nearby${label ? ` · ${label}` : ""}${this._paused ? " · paused" : ""}`}
+            </p>
           </div>
           <button @click=${this._togglePause}>${this._paused ? "Resume" : "Pause"}</button>
         </header>
@@ -218,7 +222,13 @@ export class AirwatchListCard extends LitElement {
         <header>
           <div>
             <h2>${this._config.title || (mode === "aircraft" ? "Nearby Aircraft" : "Airport Schedule")}</h2>
-            <p>${attrs.last_updated ? `Updated ${new Date(attrs.last_updated).toLocaleTimeString()}` : "Waiting for data"}</p>
+            <p>
+              ${getEntity(this.hass, this._config.entity)?.state === "unavailable"
+                ? "Provider unavailable — check Home Assistant logs"
+                : attrs.last_updated
+                  ? `Updated ${new Date(attrs.last_updated).toLocaleTimeString()}`
+                  : "Waiting for data"}
+            </p>
           </div>
         </header>
         ${mode === "aircraft"
@@ -392,7 +402,7 @@ function renderAircraftDetails(plane: Aircraft): TemplateResult {
   if (plane.vertical_rate_fpm) {
     items.push(["Vertical", `${plane.vertical_rate_fpm > 0 ? "+" : ""}${plane.vertical_rate_fpm} fpm`]);
   }
-  const typeName = aircraftTypeName(plane.type_code);
+  const typeName = aircraftTypeName(plane.type_code) || plane.model;
   if (typeName) items.push(["Type", typeName]);
   if (plane.registration) items.push(["Registration", plane.registration]);
   if (plane.icao24) items.push(["ICAO24", plane.icao24.toUpperCase()]);

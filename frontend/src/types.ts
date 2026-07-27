@@ -50,6 +50,7 @@ export interface Aircraft {
   registration?: string | null;
   category?: "jet" | "prop" | "light" | "heli" | null;
   type_code?: string | null;
+  model?: string | null;
   emergency?: boolean;
   altitude_ft?: number | null;
   ground_speed_kt?: number | null;

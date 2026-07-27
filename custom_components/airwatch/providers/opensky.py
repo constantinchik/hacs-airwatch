@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from math import cos, radians
@@ -15,11 +16,13 @@ from ..provider import AirwatchProvider
 _LOGGER = logging.getLogger(__name__)
 
 STATES_URL = "https://opensky-network.org/api/states/all"
+METADATA_URL = "https://opensky-network.org/api/metadata/aircraft/icao/{icao24}"
 TOKEN_URL = (
     "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
 )
 
 EMERGENCY_SQUAWKS = {"7500", "7600", "7700"}
+MAX_METADATA_LOOKUPS_PER_CYCLE = 8
 
 # OpenSky ADS-B emitter categories -> Airwatch categories.
 # https://openskynetwork.github.io/opensky-api/rest.html
@@ -56,6 +59,8 @@ class OpenSkyProvider(AirwatchProvider):
         self._client_secret = client_secret or None
         self._token: str | None = None
         self._token_expires_at = 0.0
+        # icao24 -> metadata dict, or None when OpenSky has no record (negative cache).
+        self._metadata: dict[str, dict[str, Any] | None] = {}
 
     @property
     def authenticated(self) -> bool:
@@ -88,14 +93,63 @@ class OpenSkyProvider(AirwatchProvider):
                         headers=headers,
                         timeout=aiohttp.ClientTimeout(total=30),
                     ) as retry:
-                        return self._parse_states(await self._read_json(retry))
-                return self._parse_states(await self._read_json(resp))
+                        aircraft = self._parse_states(await self._read_json(retry))
+                else:
+                    aircraft = self._parse_states(await self._read_json(resp))
         except (TimeoutError, aiohttp.ClientError) as err:
             raise OpenSkyError(f"OpenSky request failed: {err}") from err
+        await self._apply_metadata(aircraft)
+        return aircraft
 
     async def async_get_schedules(self, *, airport_code: str | None) -> list[ScheduledFlight]:
         # Schedules come from airport-website adapters, not OpenSky.
         return []
+
+    async def _apply_metadata(self, aircraft: list[Aircraft]) -> None:
+        """Enrich aircraft with cached OpenSky metadata (type, class, registration)."""
+        pending = [
+            plane.icao24
+            for plane in aircraft
+            if plane.icao24 and plane.icao24 not in self._metadata
+        ][:MAX_METADATA_LOOKUPS_PER_CYCLE]
+        if pending:
+            await asyncio.gather(*(self._fetch_metadata(icao24) for icao24 in pending))
+        for plane in aircraft:
+            meta = self._metadata.get(plane.icao24 or "")
+            if not meta:
+                continue
+            plane.registration = plane.registration or meta.get("registration")
+            plane.type_code = meta.get("typecode")
+            plane.model = meta.get("model")
+            category = class_to_category(meta.get("icao_class"))
+            if category:
+                plane.category = category
+
+    async def _fetch_metadata(self, icao24: str) -> None:
+        headers = await self._auth_headers()
+        try:
+            async with self._session.get(
+                METADATA_URL.format(icao24=icao24),
+                headers=headers,
+                timeout=aiohttp.ClientTimeout(total=15),
+            ) as resp:
+                if resp.status == 404:
+                    self._metadata[icao24] = None
+                    return
+                if resp.status >= 400:
+                    # Transient (rate limit etc.) - retry on a later cycle.
+                    _LOGGER.debug("Metadata lookup for %s returned HTTP %s", icao24, resp.status)
+                    return
+                data = await resp.json()
+        except (TimeoutError, aiohttp.ClientError, ValueError) as err:
+            _LOGGER.debug("Metadata lookup for %s failed: %s", icao24, err)
+            return
+        self._metadata[icao24] = {
+            "registration": str(data.get("registration") or "").strip() or None,
+            "typecode": str(data.get("typecode") or "").strip().upper() or None,
+            "model": str(data.get("model") or "").strip() or None,
+            "icao_class": data.get("icaoAircraftClass") or data.get("icaoAircraftType"),
+        }
 
     async def _read_json(self, resp: aiohttp.ClientResponse) -> dict[str, Any]:
         if resp.status == 429:
@@ -143,6 +197,26 @@ class OpenSkyProvider(AirwatchProvider):
         ]
         _LOGGER.debug("OpenSky returned %d usable aircraft", len(aircraft))
         return aircraft
+
+
+def class_to_category(icao_class: Any) -> AircraftCategory | None:
+    """Map an ICAO aircraft class like 'L2J' or 'H1T' to an Airwatch category."""
+    if not icao_class or not isinstance(icao_class, str):
+        return None
+    cleaned = icao_class.strip().upper()
+    if not cleaned:
+        return None
+    if cleaned[0] in ("H", "G"):  # helicopter, gyrocopter
+        return "heli"
+    if len(cleaned) >= 3:
+        engine = cleaned[2]
+        if engine == "J":
+            return "jet"
+        if engine == "T":
+            return "prop"
+        if engine in ("P", "E"):
+            return "light"
+    return None
 
 
 def state_to_aircraft(state: list[Any]) -> Aircraft | None:

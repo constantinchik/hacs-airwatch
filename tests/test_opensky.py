@@ -77,3 +77,18 @@ def test_falls_back_to_geo_altitude_and_blank_callsign() -> None:
     assert plane is not None
     assert plane.callsign is None
     assert plane.altitude_ft == 5184
+
+
+def test_class_to_category() -> None:
+    from custom_components.airwatch.providers.opensky import class_to_category
+
+    assert class_to_category("H1T") == "heli"
+    assert class_to_category("H2T") == "heli"
+    assert class_to_category("G1P") == "heli"
+    assert class_to_category("L2J") == "jet"
+    assert class_to_category("L2T") == "prop"
+    assert class_to_category("L1P") == "light"
+    assert class_to_category("L1E") == "light"
+    assert class_to_category("") is None
+    assert class_to_category(None) is None
+    assert class_to_category("L2") is None
