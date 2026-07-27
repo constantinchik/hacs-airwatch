@@ -59,8 +59,12 @@ export interface Aircraft {
   on_ground?: boolean;
   origin?: string | null;
   origin_name?: string | null;
+  origin_latitude?: number | null;
+  origin_longitude?: number | null;
   destination?: string | null;
   destination_name?: string | null;
+  destination_latitude?: number | null;
+  destination_longitude?: number | null;
   updated_at?: string;
 }
 

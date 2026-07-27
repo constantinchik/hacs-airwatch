@@ -17,12 +17,14 @@ _LOGGER = logging.getLogger(__name__)
 
 STATES_URL = "https://opensky-network.org/api/states/all"
 METADATA_URL = "https://opensky-network.org/api/metadata/aircraft/icao/{icao24}"
+ROUTE_URL = "https://api.adsbdb.com/v0/callsign/{callsign}"
 TOKEN_URL = (
     "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
 )
 
 EMERGENCY_SQUAWKS = {"7500", "7600", "7700"}
 MAX_METADATA_LOOKUPS_PER_CYCLE = 8
+MAX_ROUTE_LOOKUPS_PER_CYCLE = 5
 
 # OpenSky ADS-B emitter categories -> Airwatch categories.
 # https://openskynetwork.github.io/opensky-api/rest.html
@@ -61,6 +63,8 @@ class OpenSkyProvider(AirwatchProvider):
         self._token_expires_at = 0.0
         # icao24 -> metadata dict, or None when OpenSky has no record (negative cache).
         self._metadata: dict[str, dict[str, Any] | None] = {}
+        # callsign -> route dict, or None when adsbdb has no route (negative cache).
+        self._routes: dict[str, dict[str, Any] | None] = {}
 
     @property
     def authenticated(self) -> bool:
@@ -99,6 +103,7 @@ class OpenSkyProvider(AirwatchProvider):
         except (TimeoutError, aiohttp.ClientError) as err:
             raise OpenSkyError(f"OpenSky request failed: {err}") from err
         await self._apply_metadata(aircraft)
+        await self._apply_routes(aircraft)
         return aircraft
 
     async def async_get_schedules(self, *, airport_code: str | None) -> list[ScheduledFlight]:
@@ -124,6 +129,48 @@ class OpenSkyProvider(AirwatchProvider):
             category = class_to_category(meta.get("icao_class"))
             if category:
                 plane.category = category
+
+    async def _apply_routes(self, aircraft: list[Aircraft]) -> None:
+        """Enrich aircraft with cached adsbdb route data (origin/destination airports)."""
+        pending = [
+            plane.callsign
+            for plane in aircraft
+            if plane.callsign and plane.callsign.isalnum() and plane.callsign not in self._routes
+        ][:MAX_ROUTE_LOOKUPS_PER_CYCLE]
+        if pending:
+            await asyncio.gather(*(self._fetch_route(callsign) for callsign in pending))
+        for plane in aircraft:
+            route = self._routes.get(plane.callsign or "")
+            if not route:
+                continue
+            if origin := route.get("origin"):
+                plane.origin = origin.get("code")
+                plane.origin_name = origin.get("name")
+                plane.origin_latitude = origin.get("latitude")
+                plane.origin_longitude = origin.get("longitude")
+            if destination := route.get("destination"):
+                plane.destination = destination.get("code")
+                plane.destination_name = destination.get("name")
+                plane.destination_latitude = destination.get("latitude")
+                plane.destination_longitude = destination.get("longitude")
+
+    async def _fetch_route(self, callsign: str) -> None:
+        try:
+            async with self._session.get(
+                ROUTE_URL.format(callsign=callsign),
+                timeout=aiohttp.ClientTimeout(total=15),
+            ) as resp:
+                if resp.status == 404:
+                    self._routes[callsign] = None
+                    return
+                if resp.status >= 400:
+                    _LOGGER.debug("Route lookup for %s returned HTTP %s", callsign, resp.status)
+                    return
+                payload = await resp.json()
+        except (TimeoutError, aiohttp.ClientError, ValueError) as err:
+            _LOGGER.debug("Route lookup for %s failed: %s", callsign, err)
+            return
+        self._routes[callsign] = parse_route(payload)
 
     async def _fetch_metadata(self, icao24: str) -> None:
         headers = await self._auth_headers()
@@ -197,6 +244,35 @@ class OpenSkyProvider(AirwatchProvider):
         ]
         _LOGGER.debug("OpenSky returned %d usable aircraft", len(aircraft))
         return aircraft
+
+
+def parse_route(payload: dict[str, Any]) -> dict[str, Any] | None:
+    """Extract origin/destination airports from an adsbdb callsign response."""
+    response = payload.get("response")
+    if not isinstance(response, dict):
+        return None
+    flightroute = response.get("flightroute")
+    if not isinstance(flightroute, dict):
+        return None
+
+    def airport(value: Any) -> dict[str, Any] | None:
+        if not isinstance(value, dict):
+            return None
+        code = value.get("iata_code") or value.get("icao_code")
+        if not code:
+            return None
+        return {
+            "code": str(code).upper(),
+            "name": value.get("name") or value.get("municipality"),
+            "latitude": value.get("latitude"),
+            "longitude": value.get("longitude"),
+        }
+
+    origin = airport(flightroute.get("origin"))
+    destination = airport(flightroute.get("destination"))
+    if not origin and not destination:
+        return None
+    return {"origin": origin, "destination": destination}
 
 
 def class_to_category(icao_class: Any) -> AircraftCategory | None:

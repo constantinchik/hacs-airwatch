@@ -92,3 +92,43 @@ def test_class_to_category() -> None:
     assert class_to_category("") is None
     assert class_to_category(None) is None
     assert class_to_category("L2") is None
+
+
+def test_parse_route() -> None:
+    from custom_components.airwatch.providers.opensky import parse_route
+
+    payload = {
+        "response": {
+            "flightroute": {
+                "callsign": "POE7031",
+                "origin": {
+                    "iata_code": "YOW",
+                    "icao_code": "CYOW",
+                    "name": "Ottawa Macdonald-Cartier International Airport",
+                    "latitude": 45.3225,
+                    "longitude": -75.6692,
+                },
+                "destination": {
+                    "iata_code": "YTZ",
+                    "icao_code": "CYTZ",
+                    "name": "Billy Bishop Toronto City Centre Airport",
+                    "latitude": 43.6275,
+                    "longitude": -79.3962,
+                },
+            }
+        }
+    }
+    route = parse_route(payload)
+
+    assert route is not None
+    assert route["origin"]["code"] == "YOW"
+    assert route["origin"]["latitude"] == 45.3225
+    assert route["destination"]["code"] == "YTZ"
+    assert route["destination"]["name"].startswith("Billy Bishop")
+
+
+def test_parse_route_unknown_callsign() -> None:
+    from custom_components.airwatch.providers.opensky import parse_route
+
+    assert parse_route({"response": "unknown callsign"}) is None
+    assert parse_route({"response": {"flightroute": None}}) is None

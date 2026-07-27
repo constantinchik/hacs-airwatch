@@ -33,6 +33,13 @@ export class AirwatchMapCard extends LitElement {
   private _markers = new Map<string, Marker>();
   private _resizeObserver?: ResizeObserver;
   private _fittedView?: string;
+  private _baseline = new Map<string, Aircraft>();
+  private _baselineTime = 0;
+  private _dataStamp?: string;
+  private _selStamp: string | null = null;
+  private _animTimer?: number;
+  private _flownLine?: L.Polyline;
+  private _aheadLine?: L.Polyline;
 
   public setConfig(config: AirwatchCardConfig): void {
     this._config = { entity: DEFAULT_ENTITY, ...config };
@@ -59,9 +66,18 @@ export class AirwatchMapCard extends LitElement {
     super.disconnectedCallback();
     this._resizeObserver?.disconnect();
     this._resizeObserver = undefined;
+    if (this._animTimer !== undefined) {
+      clearInterval(this._animTimer);
+      this._animTimer = undefined;
+    }
     this._map?.remove();
     this._map = undefined;
     this._markers.clear();
+    this._flownLine = undefined;
+    this._aheadLine = undefined;
+    this._dataStamp = undefined;
+    this._selStamp = null;
+    this._baselineTime = 0;
   }
 
   protected render(): TemplateResult {
@@ -120,6 +136,7 @@ export class AirwatchMapCard extends LitElement {
       this._fitView(true);
     });
     this._resizeObserver.observe(container);
+    this._animTimer = window.setInterval(() => this._animate(), 1000);
     this._renderMarkers();
   }
 
@@ -127,17 +144,24 @@ export class AirwatchMapCard extends LitElement {
     if (!this._map) return;
     const attrs = getAttributes(getEntity(this.hass, this._config.entity));
     const aircraft = attrs.aircraft ?? [];
-    const selected = attrs.selected_aircraft_id;
-    const seen = new Set<string>();
+    const selected = attrs.selected_aircraft_id ?? null;
+    const dataChanged = attrs.last_updated !== this._dataStamp;
+    const selectionChanged = selected !== this._selStamp;
 
     this._fitView();
+    if (!dataChanged && !selectionChanged) return;
+    this._dataStamp = attrs.last_updated;
+    this._selStamp = selected;
 
+    const seen = new Set<string>();
     for (const plane of aircraft) {
       seen.add(plane.id);
       const marker = this._markers.get(plane.id) ?? this._createMarker(plane);
-      marker.setLatLng([plane.latitude, plane.longitude]);
-      marker.setIcon(aircraftIcon(plane, plane.id === selected));
-      marker.bindTooltip(labelForAircraft(plane));
+      if (dataChanged) {
+        marker.setLatLng([plane.latitude, plane.longitude]);
+        marker.bindTooltip(labelForAircraft(plane));
+      }
+      this._syncMarkerIcon(marker, plane, plane.id === selected);
     }
 
     for (const [id, marker] of this._markers) {
@@ -146,6 +170,83 @@ export class AirwatchMapCard extends LitElement {
         this._markers.delete(id);
       }
     }
+
+    if (dataChanged) {
+      this._baseline = new Map(aircraft.map((plane) => [plane.id, plane]));
+      this._baselineTime = Date.now();
+    }
+    const plane = (selected && this._baseline.get(selected)) || aircraft.find((p) => p.id === selected);
+    this._updateRouteLines(plane, plane ? projectPosition(plane, this._elapsedSeconds()) : undefined);
+  }
+
+  private _syncMarkerIcon(marker: Marker, plane: Aircraft, selected: boolean): void {
+    const shapeKey = `${plane.type_code ?? ""}|${plane.category ?? ""}`;
+    const el = marker.getElement();
+    if (!el || el.dataset.shape !== shapeKey) {
+      marker.setIcon(aircraftIcon(plane, selected));
+      const fresh = marker.getElement();
+      if (fresh) fresh.dataset.shape = shapeKey;
+      return;
+    }
+    el.classList.toggle("selected", selected);
+    el.classList.toggle("grounded", Boolean(plane.on_ground));
+    el.classList.toggle("emergency", Boolean(plane.emergency));
+    const shape = el.querySelector<HTMLElement>(".plane-shape");
+    if (shape) shape.style.transform = `rotate(${plane.track_deg ?? 0}deg)`;
+  }
+
+  private _elapsedSeconds(): number {
+    if (!this._baselineTime) return 0;
+    return Math.min((Date.now() - this._baselineTime) / 1000, 120);
+  }
+
+  private _animate(): void {
+    if (!this._map || this._paused || !this._baselineTime) return;
+    const elapsed = this._elapsedSeconds();
+    for (const [id, marker] of this._markers) {
+      const plane = this._baseline.get(id);
+      if (!plane) continue;
+      const position = projectPosition(plane, elapsed);
+      marker.setLatLng(position);
+      if (id === this._selStamp) this._updateRouteLines(plane, position);
+    }
+  }
+
+  private _updateRouteLines(plane?: Aircraft, position?: [number, number]): void {
+    if (!this._map || !plane) {
+      this._flownLine?.remove();
+      this._flownLine = undefined;
+      this._aheadLine?.remove();
+      this._aheadLine = undefined;
+      return;
+    }
+    const current = position ?? [plane.latitude, plane.longitude];
+    const flown =
+      plane.origin_latitude != null && plane.origin_longitude != null
+        ? greatCircle([plane.origin_latitude, plane.origin_longitude], current)
+        : null;
+    const ahead =
+      plane.destination_latitude != null && plane.destination_longitude != null
+        ? greatCircle(current, [plane.destination_latitude, plane.destination_longitude])
+        : null;
+    this._flownLine = this._syncLine(this._flownLine, flown, "aw-route flown");
+    this._aheadLine = this._syncLine(this._aheadLine, ahead, "aw-route ahead");
+  }
+
+  private _syncLine(
+    line: L.Polyline | undefined,
+    points: [number, number][] | null,
+    className: string,
+  ): L.Polyline | undefined {
+    if (!points) {
+      line?.remove();
+      return undefined;
+    }
+    if (line) {
+      line.setLatLngs(points);
+      return line;
+    }
+    return L.polyline(points, { className, interactive: false }).addTo(this._map!);
   }
 
   private _fitView(force = false): void {
@@ -360,6 +461,46 @@ function aircraftIcon(plane: Aircraft, selected: boolean): L.DivIcon {
     iconSize: [shape.sz, shape.sz],
     iconAnchor: [shape.sz / 2, shape.sz / 2],
   });
+}
+
+function projectPosition(plane: Aircraft, elapsedSeconds: number): [number, number] {
+  const speed = plane.ground_speed_kt ?? 0;
+  const track = plane.track_deg;
+  if (plane.on_ground || speed < 20 || track == null || elapsedSeconds <= 0) {
+    return [plane.latitude, plane.longitude];
+  }
+  const meters = speed * 0.514444 * elapsedSeconds;
+  const bearing = (track * Math.PI) / 180;
+  const dLat = (meters * Math.cos(bearing)) / 111320;
+  const dLon = (meters * Math.sin(bearing)) / (111320 * Math.cos((plane.latitude * Math.PI) / 180));
+  return [plane.latitude + dLat, plane.longitude + dLon];
+}
+
+function greatCircle(from: [number, number], to: [number, number], steps = 48): [number, number][] {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const toDeg = (r: number) => (r * 180) / Math.PI;
+  const [lat1, lon1] = [toRad(from[0]), toRad(from[1])];
+  const [lat2, lon2] = [toRad(to[0]), toRad(to[1])];
+  const d =
+    2 *
+    Math.asin(
+      Math.sqrt(
+        Math.sin((lat2 - lat1) / 2) ** 2 +
+          Math.cos(lat1) * Math.cos(lat2) * Math.sin((lon2 - lon1) / 2) ** 2,
+      ),
+    );
+  if (d < 1e-9) return [from, to];
+  const points: [number, number][] = [];
+  for (let i = 0; i <= steps; i++) {
+    const f = i / steps;
+    const a = Math.sin((1 - f) * d) / Math.sin(d);
+    const b = Math.sin(f * d) / Math.sin(d);
+    const x = a * Math.cos(lat1) * Math.cos(lon1) + b * Math.cos(lat2) * Math.cos(lon2);
+    const y = a * Math.cos(lat1) * Math.sin(lon1) + b * Math.cos(lat2) * Math.sin(lon2);
+    const z = a * Math.sin(lat1) + b * Math.sin(lat2);
+    points.push([toDeg(Math.atan2(z, Math.sqrt(x * x + y * y))), toDeg(Math.atan2(y, x))]);
+  }
+  return points;
 }
 
 function labelForAircraft(plane: Aircraft): string {
@@ -754,6 +895,22 @@ function cardStyles() {
     --aw-ground: #9397ab;
     --aw-emerg: #2b2741;
     --aw-halo: rgba(121, 108, 191, 0.18);
+  }
+
+  .airwatch-marker {
+    transition: transform 1s linear;
+  }
+
+  .aw-route {
+    fill: none;
+    stroke: var(--aw-sel);
+    stroke-opacity: 0.6;
+    stroke-width: 2;
+  }
+
+  .aw-route.ahead {
+    stroke-dasharray: 6 7;
+    stroke-opacity: 0.45;
   }
 
   .plane-shape {
