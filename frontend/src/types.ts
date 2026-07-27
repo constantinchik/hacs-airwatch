@@ -47,6 +47,7 @@ export interface Aircraft {
   icao24?: string | null;
   callsign?: string | null;
   registration?: string | null;
+  category?: "jet" | "prop" | "light" | "heli" | null;
   altitude_ft?: number | null;
   ground_speed_kt?: number | null;
   track_deg?: number | null;

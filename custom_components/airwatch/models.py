@@ -8,6 +8,7 @@ from typing import Literal
 
 FlightDirection = Literal["arrival", "departure"]
 FlightStatus = Literal["scheduled", "delayed", "airborne", "landed", "cancelled", "unknown"]
+AircraftCategory = Literal["jet", "prop", "light", "heli"]
 
 
 def utc_now_iso() -> str:
@@ -25,6 +26,7 @@ class Aircraft:
     icao24: str | None = None
     callsign: str | None = None
     registration: str | None = None
+    category: AircraftCategory | None = None
     altitude_ft: int | None = None
     ground_speed_kt: int | None = None
     track_deg: int | None = None

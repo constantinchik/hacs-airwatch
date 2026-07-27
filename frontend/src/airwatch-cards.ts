@@ -332,16 +332,25 @@ export class AirwatchListCard extends LitElement {
   }
 }
 
+// Top-down silhouettes, nose pointing north so track_deg rotation works directly.
+const AIRCRAFT_SVGS: Record<string, string> = {
+  jet: `<svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5C13 2.67 12.33 2 11.5 2S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>`,
+  prop: `<svg viewBox="0 0 24 24"><path d="M12 1.5c.6 0 1 .6 1.1 1.3l.3 4.2h8.1c.3 0 .5.2.5.5v1.3l-8.6 1.4-.4 7-.1 1 2.6 1.6v1.5l-3.5-.9-3.5.9v-1.5l2.6-1.6-.1-1-.4-7L2 8.8V7.5c0-.3.2-.5.5-.5h8.1l.3-4.2c.1-.7.5-1.3 1.1-1.3z"/></svg>`,
+  heli: `<svg viewBox="0 0 24 24"><path d="M5.3 4.3 18.7 17.7M18.7 4.3 5.3 17.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/><ellipse cx="12" cy="11" rx="2.4" ry="4"/><path d="M11.35 14.4h1.3v4.8h-1.3z"/><path d="M9.6 19.2h4.8v1.3H9.6z"/></svg>`,
+};
+AIRCRAFT_SVGS.light = AIRCRAFT_SVGS.prop;
+
 function aircraftIcon(plane: Aircraft, selected: boolean): L.DivIcon {
   const rotation = plane.track_deg ?? 0;
+  const svg = AIRCRAFT_SVGS[plane.category ?? "jet"] ?? AIRCRAFT_SVGS.jet;
   const classes = ["airwatch-marker", selected ? "selected" : "", plane.on_ground ? "grounded" : ""]
     .filter(Boolean)
     .join(" ");
   return L.divIcon({
     className: classes,
-    html: `<div style="transform: rotate(${rotation}deg)">✈</div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
+    html: `<div class="plane-shape" style="transform: rotate(${rotation}deg)">${svg}</div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
   });
 }
 
@@ -357,6 +366,9 @@ function labelForAircraft(plane: Aircraft): string {
 }
 
 function renderRoute(origin?: string | null, destination?: string | null): TemplateResult {
+  if (!origin && !destination) {
+    return html`<span class="route muted">Local</span>`;
+  }
   return html`
     <span class="route">
       <span>${origin || "···"}</span>
@@ -376,13 +388,32 @@ function renderAircraftDetails(plane: Aircraft): TemplateResult {
   if (plane.ground_speed_kt != null) {
     items.push(["Speed", `${plane.ground_speed_kt} kt · ${Math.round(plane.ground_speed_kt * 1.852)} km/h`]);
   }
-  if (plane.track_deg != null) items.push(["Heading", `${plane.track_deg}°`]);
   if (plane.vertical_rate_fpm) {
     items.push(["Vertical", `${plane.vertical_rate_fpm > 0 ? "+" : ""}${plane.vertical_rate_fpm} fpm`]);
   }
   if (plane.registration) items.push(["Registration", plane.registration]);
   if (plane.icao24) items.push(["ICAO24", plane.icao24.toUpperCase()]);
-  return html`${renderRouteDetails(plane)}${renderDetails(items)}`;
+  const compass = plane.track_deg != null ? renderCompass(plane.track_deg) : null;
+  return html`${renderRouteDetails(plane)}${renderDetails(items, compass)}`;
+}
+
+function renderCompass(deg: number): TemplateResult {
+  return html`
+    <span class="detail compass-detail" title="${deg}°">
+      <small>Heading</small>
+      <span class="compass">
+        <svg viewBox="0 0 32 32" aria-label="Heading ${deg} degrees">
+          <circle cx="16" cy="16" r="13" fill="none" stroke="currentColor" stroke-opacity="0.3" stroke-width="1.5" />
+          <path d="M16 3v3M16 29v-3M3 16h3M29 16h-3" stroke="currentColor" stroke-opacity="0.5" stroke-width="1.5" stroke-linecap="round" fill="none" />
+          <g transform="rotate(${deg} 16 16)">
+            <path class="needle-n" d="M16 5.5l2.6 10.5h-5.2z" />
+            <path class="needle-s" d="M16 26.5l-2.6-10.5h5.2z" />
+          </g>
+        </svg>
+        <span class="compass-deg">${deg}°</span>
+      </span>
+    </span>
+  `;
 }
 
 function renderRouteDetails(plane: Aircraft): TemplateResult | null {
@@ -418,10 +449,11 @@ function renderFlightDetails(flight: ScheduledFlight, aircraft?: Aircraft): Temp
   return renderDetails(items);
 }
 
-function renderDetails(items: Array<[string, string]>): TemplateResult {
+function renderDetails(items: Array<[string, string]>, extra: TemplateResult | null = null): TemplateResult {
   return html`
     <span class="details">
       ${items.map(([label, value]) => html`<span class="detail"><small>${label}</small>${value}</span>`)}
+      ${extra}
     </span>
   `;
 }
@@ -554,6 +586,11 @@ function cardStyles() {
     width: 14px;
   }
 
+  .route.muted {
+    color: var(--secondary-text-color);
+    font-weight: 500;
+  }
+
   .meta {
     justify-self: end;
     text-align: right;
@@ -632,31 +669,71 @@ function cardStyles() {
     text-transform: uppercase;
   }
 
+  .compass {
+    align-items: center;
+    display: inline-flex;
+    gap: 6px;
+  }
+
+  .compass svg {
+    display: block;
+    height: 26px;
+    width: 26px;
+  }
+
+  .needle-n {
+    fill: var(--primary-color, #03a9f4);
+  }
+
+  .needle-s {
+    fill: currentColor;
+    opacity: 0.3;
+  }
+
+  .compass-deg {
+    font-variant-numeric: tabular-nums;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .compass-detail:hover .compass-deg {
+    opacity: 1;
+  }
+
   .empty {
     padding: 12px 16px 18px;
   }
 
   .airwatch-marker {
-    align-items: center;
-    background: var(--primary-color, #03a9f4);
-    border: 2px solid white;
-    border-radius: 999px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
-    color: white;
-    display: flex;
-    font-size: 16px;
-    height: 28px;
-    justify-content: center;
-    width: 28px;
+    color: var(--primary-color, #03a9f4);
+  }
+
+  .plane-shape {
+    height: 100%;
+    transition: transform 0.6s ease, scale 0.2s ease, filter 0.2s ease;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
+    width: 100%;
+  }
+
+  .plane-shape svg {
+    display: block;
+    fill: currentColor;
+    height: 100%;
+    width: 100%;
   }
 
   .airwatch-marker.grounded {
-    background: #78909c;
+    color: #90a4ae;
   }
 
   .airwatch-marker.selected {
-    background: #ff9800;
-    transform: scale(1.18);
+    color: #ff9800;
+    z-index: 1000 !important;
+  }
+
+  .airwatch-marker.selected .plane-shape {
+    filter: drop-shadow(0 0 6px rgba(255, 152, 0, 0.75));
+    scale: 1.3;
   }
 `;
 }

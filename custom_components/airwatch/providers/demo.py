@@ -33,12 +33,14 @@ class DemoProvider(AirwatchProvider):
         dlon = radius_km / (111.0 * max(cos(radians(latitude)), 0.2))
         north1, east1, track1 = _orbit(period_s=180, phase=0.0)
         north2, east2, track2 = _orbit(period_s=240, phase=0.5)
+        north3, east3, track3 = _orbit(period_s=75, phase=0.25)
         return [
             Aircraft(
                 id="demo-baw123",
                 icao24="400001",
                 callsign="BAW123",
                 registration="G-DEMO",
+                category="jet",
                 latitude=latitude + 0.45 * dlat * north1,
                 longitude=longitude + 0.45 * dlon * east1,
                 altitude_ft=2750,
@@ -54,6 +56,7 @@ class DemoProvider(AirwatchProvider):
                 id="demo-ezy42",
                 icao24="400002",
                 callsign="EZY42",
+                category="jet",
                 latitude=latitude + 0.70 * dlat * north2,
                 longitude=longitude + 0.70 * dlon * east2,
                 altitude_ft=6100,
@@ -70,6 +73,7 @@ class DemoProvider(AirwatchProvider):
                 icao24="400003",
                 callsign="POE456",
                 registration="C-GDMO",
+                category="prop",
                 latitude=latitude + 0.04 * dlat,
                 longitude=longitude + 0.06 * dlon,
                 altitude_ft=0,
@@ -80,6 +84,18 @@ class DemoProvider(AirwatchProvider):
                 origin_name="Billy Bishop Toronto City",
                 destination="YHZ",
                 destination_name="Halifax Stanfield International",
+            ),
+            Aircraft(
+                id="demo-chpr12",
+                icao24="400004",
+                callsign="CHPR12",
+                registration="C-GHLO",
+                category="heli",
+                latitude=latitude + 0.22 * dlat * north3,
+                longitude=longitude + 0.22 * dlon * east3,
+                altitude_ft=900,
+                ground_speed_kt=92,
+                track_deg=track3,
             ),
         ]
 
