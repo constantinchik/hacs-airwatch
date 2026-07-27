@@ -381,12 +381,15 @@ function renderRoute(origin?: string | null, destination?: string | null): Templ
 }
 
 function renderAircraftDetails(plane: Aircraft): TemplateResult {
-  const items: Array<[string, string]> = [];
+  const items: Array<[string, string | TemplateResult]> = [];
   if (plane.altitude_ft != null) {
     items.push(["Altitude", plane.on_ground ? "On ground" : `${plane.altitude_ft.toLocaleString()} ft`]);
   }
   if (plane.ground_speed_kt != null) {
-    items.push(["Speed", `${plane.ground_speed_kt} kt · ${Math.round(plane.ground_speed_kt * 1.852)} km/h`]);
+    items.push([
+      "Speed",
+      html`${plane.ground_speed_kt} kt<span class="detail-sub">${Math.round(plane.ground_speed_kt * 1.852)} km/h</span>`,
+    ]);
   }
   if (plane.vertical_rate_fpm) {
     items.push(["Vertical", `${plane.vertical_rate_fpm > 0 ? "+" : ""}${plane.vertical_rate_fpm} fpm`]);
@@ -449,7 +452,7 @@ function renderFlightDetails(flight: ScheduledFlight, aircraft?: Aircraft): Temp
   return renderDetails(items);
 }
 
-function renderDetails(items: Array<[string, string]>, extra: TemplateResult | null = null): TemplateResult {
+function renderDetails(items: Array<[string, string | TemplateResult]>, extra: TemplateResult | null = null): TemplateResult {
   return html`
     <span class="details">
       ${items.map(([label, value]) => html`<span class="detail"><small>${label}</small>${value}</span>`)}
@@ -667,6 +670,12 @@ function cardStyles() {
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+  }
+
+  .detail-sub {
+    color: var(--secondary-text-color);
+    font-size: 11px;
+    font-weight: 500;
   }
 
   .compass {
