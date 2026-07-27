@@ -27,6 +27,8 @@ class Aircraft:
     callsign: str | None = None
     registration: str | None = None
     category: AircraftCategory | None = None
+    type_code: str | None = None
+    emergency: bool = False
     altitude_ft: int | None = None
     ground_speed_kt: int | None = None
     track_deg: int | None = None

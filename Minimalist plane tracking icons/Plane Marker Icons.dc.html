@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+  body { margin: 0; background: #dededf; }
+  a { color: #5980a6; text-decoration: none; }
+  a:hover { color: #416180; }
+  pre { margin: 0; }
+</style>
+</helmet>
+
+<section style="display:flex;flex-direction:row;align-items:flex-start;gap:96px;padding:80px">
+
+  <div id="1a" style="flex:0 0 auto;width:1180px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;font-family:'Barlow Condensed',sans-serif">
+      <span style="display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:24px;padding:0 9px;background:#5980a6;color:#f2f2f3;font-size:14px;font-weight:600;letter-spacing:.1em">1a</span>
+      <span style="font-size:19px;letter-spacing:.16em;text-transform:uppercase;color:#5d5d60">Industry</span>
+    </div>
+
+    <div style="background:#f2f2f3;color:#1d1f20;font-family:'Barlow',system-ui,sans-serif;font-size:15px;line-height:1.55;padding:52px 52px 60px">
+
+      <div style="display:grid;grid-template-columns:1fr auto;align-items:end;gap:24px;margin-bottom:44px">
+        <div>
+          <div style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#597ea3;margin-bottom:10px">Marker set · rev A</div>
+          <h1 style="margin:0;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:52px;line-height:1.02;letter-spacing:.01em">Top-view aircraft silhouettes</h1>
+          <div style="margin-top:12px;max-width:620px;color:#424244">Sixteen types drawn to real plan proportions for traffic around <strong>YTZ</strong> and <strong>YYZ</strong>. One <code style="font-family:'IBM Plex Mono',monospace;font-size:13px">&lt;path&gt;</code> per aircraft, nose to 0°, centred on the rotation origin.</div>
+        </div>
+        <div style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.9;color:#5d5d60;letter-spacing:.04em">
+          <div>16 TYPES</div>
+          <div>5 STATES</div>
+          <div>20–34 ANCHORS</div>
+          <div>30 PX NOMINAL</div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:baseline;gap:14px;margin:0 0 18px">
+        <h2 style="margin:0;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:.12em;text-transform:uppercase">01 — Fleet</h2>
+        <span style="flex:1;height:1px;background:rgba(29,31,32,.16)"></span>
+      </div>
+      <div style="position:relative;border:1px solid rgba(29,31,32,.16);margin-bottom:52px">
+        <i style="position:absolute;top:-6px;left:-6px;width:11px;height:11px;background:linear-gradient(#1d1f20,#1d1f20) center/1px 100% no-repeat,linear-gradient(#1d1f20,#1d1f20) center/100% 1px no-repeat;opacity:.5"></i>
+        <i style="position:absolute;top:-6px;right:-6px;width:11px;height:11px;background:linear-gradient(#1d1f20,#1d1f20) center/1px 100% no-repeat,linear-gradient(#1d1f20,#1d1f20) center/100% 1px no-repeat;opacity:.5"></i>
+        <i style="position:absolute;bottom:-6px;left:-6px;width:11px;height:11px;background:linear-gradient(#1d1f20,#1d1f20) center/1px 100% no-repeat,linear-gradient(#1d1f20,#1d1f20) center/100% 1px no-repeat;opacity:.5"></i>
+        <i style="position:absolute;bottom:-6px;right:-6px;width:11px;height:11px;background:linear-gradient(#1d1f20,#1d1f20) center/1px 100% no-repeat,linear-gradient(#1d1f20,#1d1f20) center/100% 1px no-repeat;opacity:.5"></i>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr)">
+          <sc-for list="{{ fleet }}" as="t" hint-placeholder-count="16">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:9px;padding:22px 12px 18px;border-right:1px solid rgba(29,31,32,.10);border-bottom:1px solid rgba(29,31,32,.10)">
+              <svg viewBox="{{ t.vb }}" width="76" height="76" style="display:block;color:#2b2b2d"><path d="{{ t.d }}" fill="currentColor"></path></svg>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:.05em;text-transform:uppercase;text-align:center;line-height:1.15">{{ t.name }}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;color:#5d5d60">{{ t.icao }} · {{ t.dims }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:baseline;gap:14px;margin:0 0 18px">
+        <h2 style="margin:0;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:.12em;text-transform:uppercase">02 — Relative scale</h2>
+        <span style="flex:1;height:1px;background:rgba(29,31,32,.16)"></span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:#5d5d60">TRUE SPAN RATIO</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:52px;color:#597ea3">
+        <sc-for list="{{ fleet }}" as="t" hint-placeholder-count="16">
+          <svg viewBox="{{ t.vb }}" width="{{ t.tsW }}" height="{{ t.tsW }}" style="display:block"><path d="{{ t.d }}" fill="currentColor"></path></svg>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;align-items:baseline;gap:14px;margin:0 0 18px">
+        <h2 style="margin:0;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:.12em;text-transform:uppercase">03 — States</h2>
+        <span style="flex:1;height:1px;background:rgba(29,31,32,.16)"></span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:52px">
+        <div style="border:1px solid rgba(29,31,32,.16);padding:22px 18px 18px;background:#f2f2f3">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#5d5d60;margin-bottom:16px">LIGHT MAP</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+            <sc-for list="{{ stI }}" as="s" hint-placeholder-count="5">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center">
+                <svg viewBox="{{ a20vb }}" width="62" height="62" style="display:block;overflow:visible">
+                  <circle cx="0" cy="0" r="{{ s.hr }}" fill="{{ s.hf }}" stroke="{{ s.hs }}" stroke-width="{{ s.hw }}" stroke-dasharray="{{ s.dash }}" vector-effect="non-scaling-stroke"></circle>
+                  <path d="{{ a20d }}" fill="{{ s.fill }}" stroke="{{ s.stroke }}" stroke-width="{{ s.sw }}" opacity="{{ s.op }}" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+                </svg>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:.08em;text-transform:uppercase">{{ s.label }}</div>
+                <div style="font-size:11px;color:#5d5d60;line-height:1.3">{{ s.note }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="border:1px solid rgba(29,31,32,.16);padding:22px 18px 18px;background:#2b2b2d">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#98989b;margin-bottom:16px">DARK MAP</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+            <sc-for list="{{ stID }}" as="s" hint-placeholder-count="5">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center">
+                <svg viewBox="{{ a20vb }}" width="62" height="62" style="display:block;overflow:visible">
+                  <circle cx="0" cy="0" r="{{ s.hr }}" fill="{{ s.hf }}" stroke="{{ s.hs }}" stroke-width="{{ s.hw }}" stroke-dasharray="{{ s.dash }}" vector-effect="non-scaling-stroke"></circle>
+                  <path d="{{ a20d }}" fill="{{ s.fill }}" stroke="{{ s.stroke }}" stroke-width="{{ s.sw }}" opacity="{{ s.op }}" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+                </svg>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:#e7e7ea">{{ s.label }}</div>
+                <div style="font-size:11px;color:#98989b;line-height:1.3">{{ s.note }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:44px;margin-bottom:52px">
+        <div>
+          <div style="display:flex;align-items:baseline;gap:14px;margin:0 0 18px">
+            <h2 style="margin:0;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:.12em;text-transform:uppercase">04 — Heading</h2>
+            <span style="flex:1;height:1px;background:rgba(29,31,32,.16)"></span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:14px">
+            <sc-for list="{{ headings }}" as="h" hint-placeholder-count="8">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+                <svg viewBox="{{ a20vb }}" width="58" height="58" style="display:block;color:#2b2b2d"><g transform="{{ h.deg }}"><path d="{{ a20d }}" fill="currentColor"></path></g></svg>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;color:#5d5d60">{{ h.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:14px;font-size:13px;color:#424244;max-width:420px">Rotation origin is the viewBox centre, which sits on the aircraft's plan centroid — so the marker pivots on the reported position, not on its nose.</div>
+        </div>
+        <div>
+          <div style="display:flex;align-items:baseline;gap:14px;margin:0 0 18px">
+            <h2 style="margin:0;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:.12em;text-transform:uppercase">05 — Labels</h2>
+            <span style="flex:1;height:1px;background:rgba(29,31,32,.16)"></span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <div style="display:flex;align-items:center;gap:16px">
+              <svg viewBox="{{ a20vb }}" width="34" height="34" style="display:block;color:#2b2b2d"><g transform="rotate(38)"><path d="{{ a20d }}" fill="currentColor"></path></g></svg>
+              <span style="font-size:13px;color:#5d5d60">Plain — default density</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <svg viewBox="{{ a20vb }}" width="34" height="34" style="display:block;color:#5980a6"><g transform="rotate(38)"><path d="{{ a20d }}" fill="currentColor"></path></g></svg>
+              <span style="display:inline-block;padding:2px 8px;background:#5980a6;color:#f2f2f3;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em">ACA1123</span>
+              <span style="font-size:13px;color:#5d5d60">Callsign chip</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <svg viewBox="{{ a20vb }}" width="34" height="34" style="display:block;color:#5980a6"><g transform="rotate(38)"><path d="{{ a20d }}" fill="currentColor"></path></g></svg>
+              <span style="display:flex;flex-direction:column;border-left:2px solid #5980a6;padding-left:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.4">
+                <span>ACA1123</span>
+                <span style="color:#5d5d60">FL340 · 452 kt · ↑</span>
+              </span>
+              <span style="font-size:13px;color:#5d5d60">Expanded, on select</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:baseline;gap:14px;margin:0 0 18px">
+        <h2 style="margin:0;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:.12em;text-transform:uppercase">06 — In situ</h2>
+        <span style="flex:1;height:1px;background:rgba(29,31,32,.16)"></span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:#5d5d60">YTZ / YYZ TERMINAL AREA</span>
+      </div>
+      <div style="position:relative;height:400px;background:#e9e9ea;border:1px solid rgba(29,31,32,.16);overflow:hidden;margin-bottom:52px">
+        <svg viewBox="0 0 1072 400" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+          <path d="M0 300C160 286 300 322 520 306S880 278 1072 298" fill="none" stroke="#b7b7ba" stroke-width="1.5"></path>
+          <path d="M0 340C160 326 300 362 520 346S880 318 1072 338" fill="none" stroke="#d4d4d7" stroke-width="1"></path>
+          <path d="M120 60V400M340 0V400M560 0V400M780 0V400M980 0V400" stroke="#dcdcde" stroke-width="1"></path>
+          <path d="M0 90H1072M0 200H1072M0 310H1072" stroke="#dcdcde" stroke-width="1"></path>
+        </svg>
+        <div style="position:absolute;left:29%;top:73%;width:9px;height:9px;background:#5980a6"></div>
+        <div style="position:absolute;left:calc(29% + 16px);top:calc(73% - 5px);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;color:#416180">YTZ</div>
+        <div style="position:absolute;left:63%;top:33%;width:9px;height:9px;background:#5980a6"></div>
+        <div style="position:absolute;left:calc(63% + 16px);top:calc(33% - 5px);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;color:#416180">YYZ</div>
+        <sc-for list="{{ mapI }}" as="m" hint-placeholder-count="8">
+          <div style="position:absolute;left:{{ m.x }}%;top:{{ m.y }}%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px">
+            <svg viewBox="{{ m.vb }}" width="{{ m.sz }}" height="{{ m.sz }}" style="display:block;overflow:visible"><g transform="{{ m.rot }}"><path d="{{ m.d }}" fill="{{ m.fill }}" stroke="{{ m.stroke }}" stroke-width="{{ m.sw }}" opacity="{{ m.op }}" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path></g></svg>
+            <sc-if value="{{ m.sel }}" hint-placeholder-val="{{ true }}">
+              <span style="display:inline-block;padding:2px 8px;background:#5980a6;color:#f2f2f3;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;white-space:nowrap">{{ m.call }}</span>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;align-items:baseline;gap:14px;margin:0 0 18px">
+        <h2 style="margin:0;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:21px;letter-spacing:.12em;text-transform:uppercase">07 — Source</h2>
+        <span style="flex:1;height:1px;background:rgba(29,31,32,.16)"></span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:#5d5d60">COPY / PASTE</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <sc-for list="{{ fleet }}" as="t" hint-placeholder-count="16">
+          <div style="border:1px solid rgba(29,31,32,.12);padding:12px 14px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">{{ t.name }} <span style="color:#5d5d60">/ {{ t.icao }}</span></div>
+            <pre style="font-family:'IBM Plex Mono',monospace;font-size:9px;line-height:1.5;color:#5d5d60;white-space:pre-wrap;word-break:break-all">{{ t.src }}</pre>
+          </div>
+        </sc-for>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="1b" style="flex:0 0 auto;width:1180px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;font-family:'Source Serif 4',serif">
+      <span style="display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:24px;padding:0 9px;background:#0088b0;color:#f3f2f2;font-size:14px;font-weight:600">1b</span>
+      <span style="font-size:19px;letter-spacing:.06em;color:#605d5d">Broadsheet</span>
+    </div>
+
+    <div style="background:#f3f2f2;color:#201e1d;font-family:'Source Serif 4',Georgia,serif;font-size:16px;line-height:1.6;padding:60px 64px 70px">
+
+      <div style="margin-bottom:60px;max-width:820px">
+        <div style="font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:#006786;margin-bottom:14px">The aircraft plate · edition one</div>
+        <h1 style="margin:0;font-weight:600;font-size:60px;line-height:1.04;letter-spacing:-.015em">Top-view aircraft silhouettes</h1>
+        <div style="margin-top:18px;font-size:19px;line-height:1.55;color:#444141;max-width:660px">Sixteen types drawn to real plan proportions for the traffic that works Billy Bishop and Pearson. One path per aircraft, nose held at zero, centred on the rotation origin.</div>
+        <div style="margin-top:22px;font-size:14px;color:#605d5d;font-style:italic">Sixteen types · five states · twenty to thirty-four anchors · thirty pixels nominal</div>
+      </div>
+
+      <h2 style="margin:0 0 8px;font-weight:600;font-size:15px;letter-spacing:.2em;text-transform:uppercase;color:#006786">I. Fleet</h2>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:34px 24px;margin-bottom:76px">
+        <sc-for list="{{ fleet }}" as="t" hint-placeholder-count="16">
+          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding-top:22px">
+            <svg viewBox="{{ t.vb }}" width="78" height="78" style="display:block;color:#201e1d"><path d="{{ t.d }}" fill="currentColor"></path></svg>
+            <div style="font-size:19px;line-height:1.2;font-weight:600">{{ t.name }}</div>
+            <div style="font-size:14px;color:#605d5d;font-style:italic">{{ t.icao }} — {{ t.dims }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <h2 style="margin:0 0 22px;font-weight:600;font-size:15px;letter-spacing:.2em;text-transform:uppercase;color:#006786">II. Relative scale</h2>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:76px;color:#201e1d">
+        <sc-for list="{{ fleet }}" as="t" hint-placeholder-count="16">
+          <svg viewBox="{{ t.vb }}" width="{{ t.tsW }}" height="{{ t.tsW }}" style="display:block"><path d="{{ t.d }}" fill="currentColor"></path></svg>
+        </sc-for>
+      </div>
+
+      <h2 style="margin:0 0 26px;font-weight:600;font-size:15px;letter-spacing:.2em;text-transform:uppercase;color:#006786">III. States</h2>
+      <div style="margin-bottom:44px">
+        <div style="font-size:14px;font-style:italic;color:#605d5d;margin-bottom:18px">On the paper ground</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:20px;max-width:820px">
+          <sc-for list="{{ stB }}" as="s" hint-placeholder-count="5">
+            <div style="display:flex;flex-direction:column;align-items:flex-start;gap:10px">
+              <svg viewBox="{{ a20vb }}" width="66" height="66" style="display:block;overflow:visible">
+                <circle cx="0" cy="0" r="{{ s.hr }}" fill="{{ s.hf }}" stroke="{{ s.hs }}" stroke-width="{{ s.hw }}" stroke-dasharray="{{ s.dash }}" vector-effect="non-scaling-stroke"></circle>
+                <path d="{{ a20d }}" fill="{{ s.fill }}" stroke="{{ s.stroke }}" stroke-width="{{ s.sw }}" opacity="{{ s.op }}" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+              </svg>
+              <div style="font-size:17px;font-weight:600;line-height:1.2">{{ s.label }}</div>
+              <div style="font-size:13px;color:#605d5d;line-height:1.35">{{ s.note }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="background:#2d2b2b;padding:34px 32px 30px;margin-bottom:76px">
+        <div style="font-size:14px;font-style:italic;color:#bab6b6;margin-bottom:18px">On the night ground</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:20px;max-width:820px">
+          <sc-for list="{{ stBD }}" as="s" hint-placeholder-count="5">
+            <div style="display:flex;flex-direction:column;align-items:flex-start;gap:10px">
+              <svg viewBox="{{ a20vb }}" width="66" height="66" style="display:block;overflow:visible">
+                <circle cx="0" cy="0" r="{{ s.hr }}" fill="{{ s.hf }}" stroke="{{ s.hs }}" stroke-width="{{ s.hw }}" stroke-dasharray="{{ s.dash }}" vector-effect="non-scaling-stroke"></circle>
+                <path d="{{ a20d }}" fill="{{ s.fill }}" stroke="{{ s.stroke }}" stroke-width="{{ s.sw }}" opacity="{{ s.op }}" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+              </svg>
+              <div style="font-size:17px;font-weight:600;line-height:1.2;color:#f8f4f4">{{ s.label }}</div>
+              <div style="font-size:13px;color:#bab6b6;line-height:1.35">{{ s.note }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:56px;margin-bottom:76px">
+        <div>
+          <h2 style="margin:0 0 22px;font-weight:600;font-size:15px;letter-spacing:.2em;text-transform:uppercase;color:#006786">IV. Heading</h2>
+          <div style="display:flex;flex-wrap:wrap;gap:16px">
+            <sc-for list="{{ headings }}" as="h" hint-placeholder-count="8">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+                <svg viewBox="{{ a20vb }}" width="60" height="60" style="display:block;color:#201e1d"><g transform="{{ h.deg }}"><path d="{{ a20d }}" fill="currentColor"></path></g></svg>
+                <div style="font-size:13px;color:#605d5d;font-style:italic">{{ h.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:20px;font-size:15px;color:#444141;max-width:440px">The rotation origin is the viewBox centre, sitting on the aircraft's plan centroid — the marker pivots on the reported position, never on its nose.</div>
+        </div>
+        <div>
+          <h2 style="margin:0 0 22px;font-weight:600;font-size:15px;letter-spacing:.2em;text-transform:uppercase;color:#006786">V. Labels</h2>
+          <div style="display:flex;flex-direction:column;gap:24px">
+            <div style="display:flex;align-items:center;gap:16px">
+              <svg viewBox="{{ a20vb }}" width="36" height="36" style="display:block;color:#201e1d"><g transform="rotate(38)"><path d="{{ a20d }}" fill="currentColor"></path></g></svg>
+              <span style="font-size:15px;color:#605d5d;font-style:italic">Plain — the default density</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <svg viewBox="{{ a20vb }}" width="36" height="36" style="display:block;color:#0088b0"><g transform="rotate(38)"><path d="{{ a20d }}" fill="currentColor"></path></g></svg>
+              <span style="display:inline-block;padding:1px 9px;background:#0088b0;color:#f3f2f2;font-size:14px;letter-spacing:.04em">ACA1123</span>
+              <span style="font-size:15px;color:#605d5d;font-style:italic">Callsign</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <svg viewBox="{{ a20vb }}" width="36" height="36" style="display:block;color:#0088b0"><g transform="rotate(38)"><path d="{{ a20d }}" fill="currentColor"></path></g></svg>
+              <span style="display:flex;flex-direction:column;line-height:1.35">
+                <span style="font-size:15px;font-weight:600">ACA1123</span>
+                <span style="font-size:14px;color:#605d5d">FL340 · 452 kt · climbing</span>
+              </span>
+              <span style="font-size:15px;color:#605d5d;font-style:italic">On select</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2 style="margin:0 0 22px;font-weight:600;font-size:15px;letter-spacing:.2em;text-transform:uppercase;color:#006786">VI. In situ — YTZ / YYZ terminal area</h2>
+      <div style="position:relative;height:420px;background:#eae9e9;overflow:hidden;margin-bottom:76px">
+        <svg viewBox="0 0 1052 420" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+          <path d="M0 315C160 300 300 338 520 321S880 292 1052 313" fill="none" stroke="#bab6b6" stroke-width="1.5"></path>
+          <path d="M0 357C160 342 300 380 520 363S880 334 1052 355" fill="none" stroke="#d7d3d3" stroke-width="1"></path>
+        </svg>
+        <div style="position:absolute;left:29%;top:73%;width:8px;height:8px;background:#0088b0;border-radius:8px"></div>
+        <div style="position:absolute;left:calc(29% + 15px);top:calc(73% - 9px);font-size:14px;letter-spacing:.12em;color:#006786">YTZ</div>
+        <div style="position:absolute;left:63%;top:33%;width:8px;height:8px;background:#0088b0;border-radius:8px"></div>
+        <div style="position:absolute;left:calc(63% + 15px);top:calc(33% - 9px);font-size:14px;letter-spacing:.12em;color:#006786">YYZ</div>
+        <sc-for list="{{ mapB }}" as="m" hint-placeholder-count="8">
+          <div style="position:absolute;left:{{ m.x }}%;top:{{ m.y }}%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:8px">
+            <svg viewBox="{{ m.vb }}" width="{{ m.sz }}" height="{{ m.sz }}" style="display:block;overflow:visible"><g transform="{{ m.rot }}"><path d="{{ m.d }}" fill="{{ m.fill }}" stroke="{{ m.stroke }}" stroke-width="{{ m.sw }}" opacity="{{ m.op }}" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path></g></svg>
+            <sc-if value="{{ m.sel }}" hint-placeholder-val="{{ true }}">
+              <span style="display:inline-block;padding:1px 9px;background:#0088b0;color:#f3f2f2;font-size:14px;letter-spacing:.04em;white-space:nowrap">{{ m.call }}</span>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <h2 style="margin:0 0 22px;font-weight:600;font-size:15px;letter-spacing:.2em;text-transform:uppercase;color:#006786">VII. Source</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px 34px">
+        <sc-for list="{{ fleet }}" as="t" hint-placeholder-count="16">
+          <div>
+            <div style="font-size:17px;font-weight:600;margin-bottom:6px">{{ t.name }} <span style="color:#605d5d;font-weight:400;font-style:italic">/ {{ t.icao }}</span></div>
+            <pre style="font-family:'IBM Plex Mono',monospace;font-size:9px;line-height:1.55;color:#605d5d;white-space:pre-wrap;word-break:break-all">{{ t.src }}</pre>
+          </div>
+        </sc-for>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="1c" style="flex:0 0 auto;width:1180px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;font-family:'Inter',system-ui,sans-serif">
+      <span style="display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:24px;padding:0 9px;border:1px solid #9184d9;border-radius:6px;background:#232532;color:#d2cefd;font-size:13px;font-weight:500">1c</span>
+      <span style="font-size:18px;letter-spacing:.08em;color:#595d6c">Nocturne</span>
+    </div>
+
+    <div style="background:#161826;color:#e9e9ed;font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.55;padding:40px 40px 48px">
+
+      <div style="margin-bottom:34px;max-width:760px">
+        <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#968ae0;margin-bottom:9px">Marker set · v1</div>
+        <h1 style="margin:0;font-weight:500;font-size:40px;line-height:1.08;letter-spacing:-.02em">Top-view aircraft silhouettes</h1>
+        <div style="margin-top:11px;font-size:15px;color:#b2b6ca;max-width:620px">Sixteen types at real plan proportions for YTZ and YYZ traffic. One path each, nose at 0°, centred on the rotation origin.</div>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <span style="padding:3px 9px;border:1px solid #423a6a;border-radius:6px;font-size:11px;color:#d2cefd">16 types</span>
+          <span style="padding:3px 9px;border:1px solid #423a6a;border-radius:6px;font-size:11px;color:#d2cefd">5 states</span>
+          <span style="padding:3px 9px;border:1px solid #3f424d;border-radius:6px;font-size:11px;color:#9397ab">20–34 anchors</span>
+          <span style="padding:3px 9px;border:1px solid #3f424d;border-radius:6px;font-size:11px;color:#9397ab">30 px nominal</span>
+        </div>
+      </div>
+      <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(233,233,237,.16) 48px,rgba(233,233,237,.16) calc(100% - 48px),transparent);margin-bottom:34px"></div>
+
+      <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#75798c;margin-bottom:14px">Fleet</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:34px">
+        <sc-for list="{{ fleet }}" as="t" hint-placeholder-count="16">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:17px 11px 14px;background:#232532;border:1px solid #292b31;border-radius:8px">
+            <svg viewBox="{{ t.vb }}" width="72" height="72" style="display:block;color:#cfd3e5"><path d="{{ t.d }}" fill="currentColor"></path></svg>
+            <div style="font-size:13px;font-weight:500;text-align:center;line-height:1.25">{{ t.name }}</div>
+            <div style="font-size:10.5px;color:#75798c;letter-spacing:.04em">{{ t.icao }} · {{ t.dims }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#75798c;margin-bottom:14px">Relative scale</div>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-bottom:34px;color:#968ae0">
+        <sc-for list="{{ fleet }}" as="t" hint-placeholder-count="16">
+          <svg viewBox="{{ t.vb }}" width="{{ t.tsW }}" height="{{ t.tsW }}" style="display:block"><path d="{{ t.d }}" fill="currentColor"></path></svg>
+        </sc-for>
+      </div>
+
+      <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#75798c;margin-bottom:14px">States</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:34px">
+        <div style="background:#161826;border:1px solid #292b31;border-radius:8px;padding:17px 14px 14px">
+          <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#595d6c;margin-bottom:12px">Dark map</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">
+            <sc-for list="{{ stN }}" as="s" hint-placeholder-count="5">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center">
+                <svg viewBox="{{ a20vb }}" width="60" height="60" style="display:block;overflow:visible">
+                  <circle cx="0" cy="0" r="{{ s.hr }}" fill="{{ s.hf }}" stroke="{{ s.hs }}" stroke-width="{{ s.hw }}" stroke-dasharray="{{ s.dash }}" vector-effect="non-scaling-stroke"></circle>
+                  <path d="{{ a20d }}" fill="{{ s.fill }}" stroke="{{ s.stroke }}" stroke-width="{{ s.sw }}" opacity="{{ s.op }}" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+                </svg>
+                <div style="font-size:12.5px;font-weight:500">{{ s.label }}</div>
+                <div style="font-size:10.5px;color:#75798c;line-height:1.3">{{ s.note }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="background:#e4e7f5;border:1px solid #cfd3e5;border-radius:8px;padding:17px 14px 14px">
+          <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#75798c;margin-bottom:12px">Light map</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">
+            <sc-for list="{{ stNL }}" as="s" hint-placeholder-count="5">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center">
+                <svg viewBox="{{ a20vb }}" width="60" height="60" style="display:block;overflow:visible">
+                  <circle cx="0" cy="0" r="{{ s.hr }}" fill="{{ s.hf }}" stroke="{{ s.hs }}" stroke-width="{{ s.hw }}" stroke-dasharray="{{ s.dash }}" vector-effect="non-scaling-stroke"></circle>
+                  <path d="{{ a20d }}" fill="{{ s.fill }}" stroke="{{ s.stroke }}" stroke-width="{{ s.sw }}" opacity="{{ s.op }}" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+                </svg>
+                <div style="font-size:12.5px;font-weight:500;color:#292b31">{{ s.label }}</div>
+                <div style="font-size:10.5px;color:#595d6c;line-height:1.3">{{ s.note }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:28px;margin-bottom:34px">
+        <div>
+          <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#75798c;margin-bottom:14px">Heading</div>
+          <div style="display:flex;flex-wrap:wrap;gap:12px">
+            <sc-for list="{{ headings }}" as="h" hint-placeholder-count="8">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:5px">
+                <svg viewBox="{{ a20vb }}" width="56" height="56" style="display:block;color:#cfd3e5"><g transform="{{ h.deg }}"><path d="{{ a20d }}" fill="currentColor"></path></g></svg>
+                <div style="font-size:10.5px;color:#75798c;letter-spacing:.04em">{{ h.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:12px;font-size:13px;color:#b2b6ca;max-width:420px">Rotation origin is the viewBox centre, on the aircraft's plan centroid — the marker pivots on the reported position, not the nose.</div>
+        </div>
+        <div>
+          <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#75798c;margin-bottom:14px">Labels</div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;align-items:center;gap:14px">
+              <svg viewBox="{{ a20vb }}" width="34" height="34" style="display:block;color:#cfd3e5"><g transform="rotate(38)"><path d="{{ a20d }}" fill="currentColor"></path></g></svg>
+              <span style="font-size:13px;color:#75798c">Plain — default density</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:9px">
+              <svg viewBox="{{ a20vb }}" width="34" height="34" style="display:block;color:#9184d9"><g transform="rotate(38)"><path d="{{ a20d }}" fill="currentColor"></path></g></svg>
+              <span style="display:inline-block;padding:2px 8px;border:1px solid #9184d9;border-radius:6px;color:#d2cefd;font-size:11.5px;letter-spacing:.03em">ACA1123</span>
+              <span style="font-size:13px;color:#75798c">Callsign chip</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:9px">
+              <svg viewBox="{{ a20vb }}" width="34" height="34" style="display:block;color:#9184d9"><g transform="rotate(38)"><path d="{{ a20d }}" fill="currentColor"></path></g></svg>
+              <span style="display:flex;flex-direction:column;padding:4px 9px;background:#232532;border:1px solid #3f424d;border-radius:8px;line-height:1.35">
+                <span style="font-size:12px;font-weight:500">ACA1123</span>
+                <span style="font-size:11px;color:#9397ab">FL340 · 452 kt · ↑</span>
+              </span>
+              <span style="font-size:13px;color:#75798c">Expanded, on select</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#75798c;margin-bottom:14px">In situ — YTZ / YYZ terminal area</div>
+      <div style="position:relative;height:380px;background:#1b1d2e;border:1px solid #292b31;border-radius:8px;overflow:hidden;margin-bottom:34px">
+        <svg viewBox="0 0 1092 380" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+          <path d="M0 285C165 272 305 306 530 291S895 264 1092 283" fill="none" stroke="#3f424d" stroke-width="1.5"></path>
+          <path d="M0 323C165 310 305 344 530 329S895 302 1092 321" fill="none" stroke="#292b31" stroke-width="1"></path>
+        </svg>
+        <div style="position:absolute;left:29%;top:73%;width:7px;height:7px;background:#9184d9;border-radius:7px;box-shadow:0 0 0 4px rgba(145,132,217,.18)"></div>
+        <div style="position:absolute;left:calc(29% + 14px);top:calc(73% - 7px);font-size:11.5px;letter-spacing:.1em;color:#b5abfc">YTZ</div>
+        <div style="position:absolute;left:63%;top:33%;width:7px;height:7px;background:#9184d9;border-radius:7px;box-shadow:0 0 0 4px rgba(145,132,217,.18)"></div>
+        <div style="position:absolute;left:calc(63% + 14px);top:calc(33% - 7px);font-size:11.5px;letter-spacing:.1em;color:#b5abfc">YYZ</div>
+        <sc-for list="{{ mapN }}" as="m" hint-placeholder-count="8">
+          <div style="position:absolute;left:{{ m.x }}%;top:{{ m.y }}%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px">
+            <svg viewBox="{{ m.vb }}" width="{{ m.sz }}" height="{{ m.sz }}" style="display:block;overflow:visible"><g transform="{{ m.rot }}"><path d="{{ m.d }}" fill="{{ m.fill }}" stroke="{{ m.stroke }}" stroke-width="{{ m.sw }}" opacity="{{ m.op }}" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path></g></svg>
+            <sc-if value="{{ m.sel }}" hint-placeholder-val="{{ true }}">
+              <span style="display:inline-block;padding:2px 8px;border:1px solid #9184d9;border-radius:6px;background:rgba(22,24,38,.72);color:#d2cefd;font-size:11.5px;white-space:nowrap">{{ m.call }}</span>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#75798c;margin-bottom:14px">Source</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+        <sc-for list="{{ fleet }}" as="t" hint-placeholder-count="16">
+          <div style="background:#232532;border:1px solid #292b31;border-radius:8px;padding:11px 13px">
+            <div style="font-size:12.5px;font-weight:500;margin-bottom:5px">{{ t.name }} <span style="color:#75798c;font-weight:400">/ {{ t.icao }}</span></div>
+            <pre style="font-family:'IBM Plex Mono',monospace;font-size:9px;line-height:1.5;color:#9397ab;white-space:pre-wrap;word-break:break-all">{{ t.src }}</pre>
+          </div>
+        </sc-for>
+      </div>
+
+    </div>
+  </div>
+
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  cfg() {
+    return [
+      {k:'C172',name:'Cessna 172S',i:'C172',c:'GA piston',L:8.28,S:11.0,fd:1.2,nose:.18,wingLE:.24,rootC:.165,tipC:.155,sweep:1,hS:3.4,hLE:.82,hRootC:.14,hTipC:.11,hSweep:10,eng:{t:'nose',prop:1.93}},
+      {k:'C208',name:'Cessna 208B Caravan',i:'C208',c:'Utility turboprop',L:12.67,S:15.88,fd:1.6,nose:.17,wingLE:.20,rootC:.16,tipC:.12,sweep:2,hS:6.25,hLE:.82,hRootC:.12,hTipC:.08,hSweep:14,eng:{t:'nose',prop:2.69}},
+      {k:'PC12',name:'Pilatus PC-12 NGX',i:'PC12',c:'Single turboprop',L:14.4,S:16.28,fd:1.65,nose:.20,wingLE:.28,rootC:.16,tipC:.09,sweep:3,hS:5.2,hLE:.84,hRootC:.11,hTipC:.07,hSweep:14,eng:{t:'nose',prop:2.67}},
+      {k:'DH8D',name:'Dash 8 Q400',i:'DH8D',c:'Regional turboprop',L:32.83,S:28.42,fd:2.69,nose:.13,wingLE:.30,rootC:.11,tipC:.055,sweep:4,hS:9.4,hLE:.87,hRootC:.085,hTipC:.05,hSweep:16,eng:{t:'tprop',dia:1.5,len:5.2,at:.30,prop:4.11}},
+      {k:'CRJ9',name:'Bombardier CRJ-900',i:'CRJ9',c:'Regional jet',L:36.24,S:24.85,fd:2.69,tt:1,nose:.12,wingLE:.42,rootC:.17,tipC:.05,sweep:27,hS:7.9,hLE:.90,hRootC:.075,hTipC:.035,hSweep:34,eng:{t:'rear',dia:1.75,len:4.3,at:.57}},
+      {k:'E75L',name:'Embraer E175',i:'E75L',c:'Regional jet',L:31.68,S:26.0,fd:3.01,nose:.13,wingLE:.40,rootC:.17,tipC:.05,sweep:25,hS:9.0,hLE:.86,hRootC:.09,hTipC:.04,hSweep:30,eng:{t:'wing',dia:1.7,len:3.9,at:[.34]}},
+      {k:'E295',name:'Embraer E195-E2',i:'E295',c:'Regional jet',L:41.5,S:35.1,fd:3.01,nose:.12,wingLE:.40,rootC:.16,tipC:.045,sweep:26,hS:11.2,hLE:.86,hRootC:.085,hTipC:.035,hSweep:30,eng:{t:'wing',dia:2.0,len:4.4,at:[.33]}},
+      {k:'BCS3',name:'Airbus A220-300',i:'BCS3',c:'Narrowbody',L:38.71,S:35.1,fd:3.7,nose:.13,wingLE:.38,rootC:.16,tipC:.045,sweep:26,hS:11.4,hLE:.87,hRootC:.085,hTipC:.04,hSweep:31,eng:{t:'wing',dia:2.05,len:4.5,at:[.34]}},
+      {k:'A20N',name:'Airbus A320neo',i:'A20N',c:'Narrowbody',L:37.57,S:35.8,fd:3.95,nose:.12,wingLE:.37,rootC:.16,tipC:.045,sweep:27,hS:12.45,hLE:.87,hRootC:.09,hTipC:.04,hSweep:31,eng:{t:'wing',dia:2.25,len:4.8,at:[.34]}},
+      {k:'B39M',name:'Boeing 737 MAX 8',i:'B38M',c:'Narrowbody',L:39.52,S:35.92,fd:3.76,nose:.12,wingLE:.37,rootC:.16,tipC:.045,sweep:27,hS:14.35,hLE:.87,hRootC:.09,hTipC:.04,hSweep:31,eng:{t:'wing',dia:2.15,len:4.6,at:[.33]}},
+      {k:'A333',name:'Airbus A330-300',i:'A333',c:'Widebody',L:63.66,S:60.3,fd:5.64,nose:.11,wingLE:.36,rootC:.18,tipC:.04,sweep:30,hS:19.4,hLE:.87,hRootC:.085,hTipC:.035,hSweep:34,eng:{t:'wing',dia:2.85,len:6.3,at:[.35]}},
+      {k:'B789',name:'Boeing 787-9',i:'B789',c:'Widebody',L:62.81,S:60.12,fd:5.77,nose:.11,wingLE:.36,rootC:.18,tipC:.04,sweep:32,hS:21.5,hLE:.87,hRootC:.08,hTipC:.035,hSweep:36,eng:{t:'wing',dia:3.1,len:6.6,at:[.36]}},
+      {k:'B77W',name:'Boeing 777-300ER',i:'B77W',c:'Widebody',L:73.86,S:64.8,fd:6.2,nose:.10,wingLE:.35,rootC:.19,tipC:.04,sweep:31,hS:21.5,hLE:.87,hRootC:.085,hTipC:.035,hSweep:35,eng:{t:'wing',dia:3.7,len:7.3,at:[.36]}},
+      {k:'GL7T',name:'Global 7500',i:'GL7T',c:'Business jet',L:33.88,S:31.75,fd:2.69,tt:1,nose:.16,wingLE:.45,rootC:.15,tipC:.05,sweep:33,hS:8.5,hLE:.90,hRootC:.07,hTipC:.03,hSweep:32,eng:{t:'rear',dia:1.8,len:4.6,at:.59}},
+      {k:'CL35',name:'Challenger 350',i:'CL35',c:'Business jet',L:20.92,S:21.0,fd:2.69,tt:1,nose:.16,wingLE:.44,rootC:.17,tipC:.06,sweep:28,hS:7.6,hLE:.90,hRootC:.09,hTipC:.04,hSweep:26,eng:{t:'rear',dia:1.5,len:3.7,at:.57}},
+      {k:'A139',name:'Leonardo AW139',i:'A139',c:'Rotary',L:13.52,S:13.8,heli:1,rotor:13.8,blades:5}
+    ];
+  }
+
+  rr(x0, x1, y0, y1, r) {
+    const f = n => Math.round(n * 10) / 10;
+    if (!r) return `M${f(x0)} ${f(y0)}L${f(x1)} ${f(y0)}L${f(x1)} ${f(y1)}L${f(x0)} ${f(y1)}Z`;
+    return `M${f(x0+r)} ${f(y0)}L${f(x1-r)} ${f(y0)}Q${f(x1)} ${f(y0)} ${f(x1)} ${f(y0+r)}L${f(x1)} ${f(y1-r)}Q${f(x1)} ${f(y1)} ${f(x1-r)} ${f(y1)}L${f(x0+r)} ${f(y1)}Q${f(x0)} ${f(y1)} ${f(x0)} ${f(y1-r)}L${f(x0)} ${f(y0+r)}Q${f(x0)} ${f(y0)} ${f(x0+r)} ${f(y0)}Z`;
+  }
+
+  blade(cx, cy, r0, r1, th, deg) {
+    const f = n => Math.round(n * 10) / 10, a = deg * Math.PI / 180;
+    const c = Math.cos(a), s = Math.sin(a), h = th / 2;
+    const p = [[r0, -h], [r1, -h], [r1, h], [r0, h]].map(q => [cx + q[0] * c - q[1] * s, cy + q[0] * s + q[1] * c]);
+    return 'M' + p.map(q => `${f(q[0])} ${f(q[1])}`).join('L') + 'Z';
+  }
+
+  heli(c) {
+    const f = n => Math.round(n * 10) / 10, R = c.rotor / 2;
+    const yN = -5.6, yT = 7.1, hub = -1.0;
+    const P = [[1.5, -3.2], [1.6, -0.4], [1.1, 1.5], [0.45, 2.8], [0.45, 5.8], [0.9, 6.6]];
+    let d = `M0 ${yN}C1.05 ${f(yN+0.5)} 1.5 ${f(yN+1.4)} 1.5 -3.2`;
+    for (let i = 1; i < P.length; i++) d += `L${f(P[i][0])} ${f(P[i][1])}`;
+    d += `L0.28 ${yT}L-0.28 ${yT}`;
+    for (let i = P.length - 1; i >= 1; i--) d += `L${f(-P[i][0])} ${f(P[i][1])}`;
+    d += `L-1.5 -3.2C-1.5 ${f(yN+1.4)} -1.05 ${f(yN+0.5)} 0 ${yN}Z`;
+    d += this.rr(-1.95, 1.95, 5.1, 5.75, 0.32);
+    d += this.rr(0.72, 1.18, 4.5, 7.0, 0.23);
+    for (let i = 0; i < c.blades; i++) d += this.blade(0, hub, 0.55, R, 0.5, -90 + i * (360 / c.blades));
+    d += this.rr(-0.9, 0.9, hub - 0.9, hub + 0.9, 0.9);
+    return { d: d, ext: Math.max(c.rotor, 13.6) };
+  }
+
+  build(c) {
+    if (c.heli) return this.heli(c);
+    const f = n => Math.round(n * 10) / 10, D = Math.PI / 180;
+    const L = c.L, b = c.S / 2, fw = c.fd / 2, yN = -L / 2, yT = L / 2;
+    const nEnd = yN + c.nose * L;
+    const wLE = yN + c.wingLE * L, wTE = wLE + c.rootC * L;
+    const tw = Math.tan(c.sweep * D);
+    const tipLE = wLE + (b - fw) * tw, tipTE = tipLE + c.tipC * L;
+    const hb = c.hS / 2, hLE = yN + c.hLE * L, hTE = hLE + c.hRootC * L;
+    const hRoot = c.tt ? fw * 0.60 : fw * 0.78;
+    const htipLE = hLE + (hb - hRoot) * Math.tan(c.hSweep * D), htipTE = htipLE + c.hTipC * L;
+    const fwTail = c.tt ? fw * 0.36 : fw * 0.40, tipFlat = fwTail * 0.5;
+    const P = [[fw, wLE], [b, tipLE], [b * 0.99, tipTE], [fw, wTE], [hRoot, hLE], [hb, htipLE], [hb * 0.94, htipTE], [fwTail, hTE]];
+    const nc1 = [fw * 0.8, yN + c.nose * L * 0.06], nc2 = [fw, yN + c.nose * L * 0.5];
+    const tc = [fwTail * 0.92, hTE + (yT - hTE) * 0.5];
+    let d = `M0 ${f(yN)}C${f(nc1[0])} ${f(nc1[1])} ${f(nc2[0])} ${f(nc2[1])} ${f(fw)} ${f(nEnd)}`;
+    P.forEach(p => { d += `L${f(p[0])} ${f(p[1])}`; });
+    d += `Q${f(tc[0])} ${f(tc[1])} ${f(tipFlat)} ${f(yT)}L${f(-tipFlat)} ${f(yT)}`;
+    d += `Q${f(-tc[0])} ${f(tc[1])} ${f(-fwTail)} ${f(hTE)}`;
+    for (let i = P.length - 2; i >= 0; i--) d += `L${f(-P[i][0])} ${f(P[i][1])}`;
+    d += `L${f(-fw)} ${f(nEnd)}C${f(-nc2[0])} ${f(nc2[1])} ${f(-nc1[0])} ${f(nc1[1])} 0 ${f(yN)}Z`;
+
+    const e = c.eng;
+    if (e && e.t === 'wing') {
+      e.at.forEach(fr => {
+        const x = fr * b, ley = wLE + (x - fw) * tw, hw = e.dia / 2;
+        const y0 = ley - e.len * 0.72, y1 = ley + e.len * 0.28;
+        d += this.rr(x - hw, x + hw, y0, y1, hw * 0.6);
+        d += this.rr(-x - hw, -x + hw, y0, y1, hw * 0.6);
+      });
+    } else if (e && e.t === 'rear') {
+      const hw = e.dia / 2, x = fw * 0.88 + hw, y0 = yN + e.at * L, y1 = y0 + e.len;
+      d += this.rr(x - hw, x + hw, y0, y1, hw * 0.62);
+      d += this.rr(-x - hw, -x + hw, y0, y1, hw * 0.62);
+    } else if (e && e.t === 'tprop') {
+      const x = e.at * b, ley = wLE + (x - fw) * tw, hw = e.dia / 2, pr = e.prop / 2;
+      const y0 = ley - e.len * 0.55, y1 = ley + e.len * 0.45;
+      [x, -x].forEach(s => {
+        d += this.rr(s - hw, s + hw, y0, y1, hw * 0.7);
+        d += this.rr(s - pr, s + pr, y0 - 0.7, y0 - 0.1, 0.3);
+      });
+    } else if (e && e.t === 'nose') {
+      const pr = e.prop / 2;
+      d += this.rr(-pr, pr, yN + 0.1, yN + 0.72, 0.3);
+    }
+    return { d: d, ext: Math.max(L, c.S) };
+  }
+
+  fleet() {
+    if (this._fleet) return this._fleet;
+    const list = this.cfg().map(c => {
+      const r = this.build(c), h = r.ext * 0.55, v = `${-h} ${-h} ${2 * h} ${2 * h}`;
+      return { k: c.k, name: c.name, icao: c.i, cat: c.c, ext: r.ext, d: r.d, vb: v,
+        dims: `${c.L.toFixed(1)} × ${c.S.toFixed(1)} m`,
+        src: `<svg viewBox="${v}" width="30" height="30"><path d="${r.d}" fill="currentColor"/></svg>` };
+    });
+    const mx = Math.max.apply(null, list.map(t => t.ext));
+    list.forEach(t => { t.tsW = Math.round(112 * t.ext / mx); });
+    this._fleet = list;
+    return list;
+  }
+
+  pick(k) { return this.fleet().filter(t => t.k === k)[0]; }
+
+  states(p, R) {
+    return [
+      { label: 'Default', note: 'tracked, in flight', fill: p.ink, stroke: 'none', sw: 0, op: 1, hr: 0, hf: 'none', hs: 'none', hw: 0, dash: 'none' },
+      { label: 'Hover', note: 'cursor / long-press', fill: p.hover, stroke: 'none', sw: 0, op: 1, hr: R, hf: p.haloFill, hs: 'none', hw: 0, dash: 'none' },
+      { label: 'Selected', note: 'accent fill + contrast outline', fill: p.sel, stroke: p.out, sw: 1.8, op: 1, hr: R, hf: 'none', hs: p.sel, hw: 1.25, dash: 'none' },
+      { label: 'On ground', note: 'taxi / gate, 50%', fill: p.ground, stroke: 'none', sw: 0, op: 0.5, hr: 0, hf: 'none', hs: 'none', hw: 0, dash: 'none' },
+      { label: 'Emergency', note: '7500 / 7600 / 7700', fill: p.emerg, stroke: p.out, sw: 1.4, op: 1, hr: R, hf: 'none', hs: p.emerg, hw: 1.6, dash: '5 3.5' }
+    ];
+  }
+
+  mapSet(p) {
+    const base = [
+      { k: 'DH8D', x: 15, y: 30, r: 118, s: 0, c: 'POE7031', sz: 34 },
+      { k: 'A20N', x: 45, y: 20, r: 208, s: 2, c: 'ACA1123', sz: 38 },
+      { k: 'B77W', x: 70, y: 55, r: 74, s: 0, c: 'ACA857', sz: 40 },
+      { k: 'E75L', x: 29, y: 63, r: 302, s: 1, c: 'JZA8402', sz: 34 },
+      { k: 'CL35', x: 80, y: 25, r: 152, s: 3, c: 'C-GJPX', sz: 30 },
+      { k: 'B39M', x: 56, y: 78, r: 26, s: 4, c: 'WJA221', sz: 36 },
+      { k: 'PC12', x: 9, y: 76, r: 88, s: 0, c: 'C-FPCK', sz: 28 },
+      { k: 'A139', x: 36, y: 43, r: 250, s: 0, c: 'C-GYHL', sz: 26 }
+    ];
+    const st = this.states(p, 0);
+    return base.map(m => {
+      const t = this.pick(m.k), s = st[m.s];
+      return { d: t.d, vb: t.vb, sz: m.sz, x: m.x, y: m.y, rot: `rotate(${m.r})`,
+        fill: s.fill, stroke: s.stroke, sw: s.sw, op: s.op, call: m.c, sel: m.s === 2 };
+    });
+  }
+
+  renderVals() {
+    const P = {
+      ind:  { ink:'#2b2b2d', hover:'#416180', sel:'#5980a6', out:'#f2f2f3', ground:'#98989b', emerg:'#1d2d3d', haloFill:'rgba(89,128,166,0.18)' },
+      indD: { ink:'#d4d4d7', hover:'#b5d9fd', sel:'#749dc4', out:'#2b2b2d', ground:'#7a7a7d', emerg:'#d6ebff', haloFill:'rgba(148,188,227,0.20)' },
+      bro:  { ink:'#201e1d', hover:'#006786', sel:'#0088b0', out:'#f3f2f2', ground:'#9b9797', emerg:'#d6006c', haloFill:'rgba(0,136,176,0.16)' },
+      broD: { ink:'#eae7e7', hover:'#99e0ff', sel:'#38a6cf', out:'#2d2b2b', ground:'#7d7979', emerg:'#ff458e', haloFill:'rgba(56,166,207,0.20)' },
+      noc:  { ink:'#cfd3e5', hover:'#f3f5fe', sel:'#9184d9', out:'#161826', ground:'#75798c', emerg:'#d2cefd', haloFill:'rgba(145,132,217,0.22)' },
+      nocL: { ink:'#3f424d', hover:'#5d5294', sel:'#796cbf', out:'#e4e7f5', ground:'#9397ab', emerg:'#2b2741', haloFill:'rgba(121,108,191,0.18)' }
+    };
+    const a = this.pick('A20N'), R = a.ext * 0.34;
+    const headings = [0, 45, 90, 135, 180, 225, 270, 315].map(d => ({ deg: `rotate(${d})`, label: (d < 100 ? (d < 10 ? '00' : '0') : '') + d + '°' }));
+    return {
+      fleet: this.fleet(),
+      a20d: a.d, a20vb: a.vb,
+      headings: headings,
+      stI: this.states(P.ind, R), stID: this.states(P.indD, R),
+      stB: this.states(P.bro, R), stBD: this.states(P.broD, R),
+      stN: this.states(P.noc, R), stNL: this.states(P.nocL, R),
+      mapI: this.mapSet(P.ind), mapB: this.mapSet(P.bro), mapN: this.mapSet(P.noc)
+    };
+  }
+}
+</script>
+</body>
+</html>

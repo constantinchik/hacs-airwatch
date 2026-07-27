@@ -2,6 +2,7 @@ export interface AirwatchCardConfig {
   type: string;
   entity?: string;
   title?: string;
+  palette?: "industry" | "broadsheet" | "nocturne";
 }
 
 export interface AirwatchListCardConfig extends AirwatchCardConfig {
@@ -48,6 +49,8 @@ export interface Aircraft {
   callsign?: string | null;
   registration?: string | null;
   category?: "jet" | "prop" | "light" | "heli" | null;
+  type_code?: string | null;
+  emergency?: boolean;
   altitude_ft?: number | null;
   ground_speed_kt?: number | null;
   track_deg?: number | null;

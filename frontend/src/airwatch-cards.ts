@@ -3,6 +3,7 @@ import * as L from "leaflet";
 import type { Map as LeafletMap, Marker } from "leaflet";
 import { LitElement, css, html, unsafeCSS, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { aircraftShape, aircraftTypeName } from "./aircraft-icons";
 import {
   aircraftForFlight,
   DEFAULT_ENTITY,
@@ -73,7 +74,7 @@ export class AirwatchMapCard extends LitElement {
     const label = plane ? plane.callsign || plane.registration || plane.id : null;
 
     return html`
-      <ha-card>
+      <ha-card class="palette-${this._config.palette || "industry"}">
         <header>
           <div>
             <h2>${this._config.title || "Airwatch Map"}</h2>
@@ -332,25 +333,22 @@ export class AirwatchListCard extends LitElement {
   }
 }
 
-// Top-down silhouettes, nose pointing north so track_deg rotation works directly.
-const AIRCRAFT_SVGS: Record<string, string> = {
-  jet: `<svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5C13 2.67 12.33 2 11.5 2S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>`,
-  prop: `<svg viewBox="0 0 24 24"><path d="M12 1.5c.6 0 1 .6 1.1 1.3l.3 4.2h8.1c.3 0 .5.2.5.5v1.3l-8.6 1.4-.4 7-.1 1 2.6 1.6v1.5l-3.5-.9-3.5.9v-1.5l2.6-1.6-.1-1-.4-7L2 8.8V7.5c0-.3.2-.5.5-.5h8.1l.3-4.2c.1-.7.5-1.3 1.1-1.3z"/></svg>`,
-  heli: `<svg viewBox="0 0 24 24"><path d="M5.3 4.3 18.7 17.7M18.7 4.3 5.3 17.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/><ellipse cx="12" cy="11" rx="2.4" ry="4"/><path d="M11.35 14.4h1.3v4.8h-1.3z"/><path d="M9.6 19.2h4.8v1.3H9.6z"/></svg>`,
-};
-AIRCRAFT_SVGS.light = AIRCRAFT_SVGS.prop;
-
 function aircraftIcon(plane: Aircraft, selected: boolean): L.DivIcon {
   const rotation = plane.track_deg ?? 0;
-  const svg = AIRCRAFT_SVGS[plane.category ?? "jet"] ?? AIRCRAFT_SVGS.jet;
-  const classes = ["airwatch-marker", selected ? "selected" : "", plane.on_ground ? "grounded" : ""]
+  const shape = aircraftShape(plane.type_code, plane.category);
+  const classes = [
+    "airwatch-marker",
+    selected ? "selected" : "",
+    plane.on_ground ? "grounded" : "",
+    plane.emergency ? "emergency" : "",
+  ]
     .filter(Boolean)
     .join(" ");
   return L.divIcon({
     className: classes,
-    html: `<div class="plane-shape" style="transform: rotate(${rotation}deg)">${svg}</div>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
+    html: `<div class="plane-shape" style="transform: rotate(${rotation}deg)"><svg viewBox="${shape.vb}" style="overflow:visible"><circle class="halo" cx="0" cy="0" r="${shape.haloR}" vector-effect="non-scaling-stroke"/><path d="${shape.d}" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg></div>`,
+    iconSize: [shape.sz, shape.sz],
+    iconAnchor: [shape.sz / 2, shape.sz / 2],
   });
 }
 
@@ -394,6 +392,8 @@ function renderAircraftDetails(plane: Aircraft): TemplateResult {
   if (plane.vertical_rate_fpm) {
     items.push(["Vertical", `${plane.vertical_rate_fpm > 0 ? "+" : ""}${plane.vertical_rate_fpm} fpm`]);
   }
+  const typeName = aircraftTypeName(plane.type_code);
+  if (typeName) items.push(["Type", typeName]);
   if (plane.registration) items.push(["Registration", plane.registration]);
   if (plane.icao24) items.push(["ICAO24", plane.icao24.toUpperCase()]);
   const compass = plane.track_deg != null ? renderCompass(plane.track_deg) : null;
@@ -713,36 +713,103 @@ function cardStyles() {
     padding: 12px 16px 18px;
   }
 
-  .airwatch-marker {
-    color: var(--primary-color, #03a9f4);
+  /* Marker palettes from the "Minimalist plane tracking icons" design doc
+     (light-map variants; dark twins land with the dark-tiles milestone). */
+  ha-card,
+  ha-card.palette-industry {
+    --aw-ink: #2b2b2d;
+    --aw-hover: #416180;
+    --aw-sel: #5980a6;
+    --aw-out: #f2f2f3;
+    --aw-ground: #98989b;
+    --aw-emerg: #1d2d3d;
+    --aw-halo: rgba(89, 128, 166, 0.18);
+  }
+
+  ha-card.palette-broadsheet {
+    --aw-ink: #201e1d;
+    --aw-hover: #006786;
+    --aw-sel: #0088b0;
+    --aw-out: #f3f2f2;
+    --aw-ground: #9b9797;
+    --aw-emerg: #d6006c;
+    --aw-halo: rgba(0, 136, 176, 0.16);
+  }
+
+  ha-card.palette-nocturne {
+    --aw-ink: #3f424d;
+    --aw-hover: #5d5294;
+    --aw-sel: #796cbf;
+    --aw-out: #e4e7f5;
+    --aw-ground: #9397ab;
+    --aw-emerg: #2b2741;
+    --aw-halo: rgba(121, 108, 191, 0.18);
   }
 
   .plane-shape {
     height: 100%;
-    transition: transform 0.6s ease, scale 0.2s ease, filter 0.2s ease;
-    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
+    transition: transform 0.6s ease;
     width: 100%;
   }
 
   .plane-shape svg {
     display: block;
-    fill: currentColor;
     height: 100%;
+    overflow: visible;
     width: 100%;
   }
 
-  .airwatch-marker.grounded {
-    color: #90a4ae;
+  .plane-shape path {
+    fill: var(--aw-ink);
+    stroke: none;
+  }
+
+  .plane-shape .halo {
+    fill: none;
+    stroke: none;
+  }
+
+  .airwatch-marker:hover:not(.selected) path {
+    fill: var(--aw-hover);
+  }
+
+  .airwatch-marker:hover:not(.selected) .halo {
+    fill: var(--aw-halo);
+  }
+
+  .airwatch-marker.grounded path {
+    fill: var(--aw-ground);
+    opacity: 0.5;
+  }
+
+  .airwatch-marker.emergency path {
+    fill: var(--aw-emerg);
+    opacity: 1;
+    stroke: var(--aw-out);
+    stroke-width: 1.4;
+  }
+
+  .airwatch-marker.emergency .halo {
+    stroke: var(--aw-emerg);
+    stroke-dasharray: 5 3.5;
+    stroke-width: 1.6;
   }
 
   .airwatch-marker.selected {
-    color: #ff9800;
     z-index: 1000 !important;
   }
 
-  .airwatch-marker.selected .plane-shape {
-    filter: drop-shadow(0 0 6px rgba(255, 152, 0, 0.75));
-    scale: 1.3;
+  .airwatch-marker.selected path {
+    fill: var(--aw-sel);
+    opacity: 1;
+    stroke: var(--aw-out);
+    stroke-width: 1.8;
+  }
+
+  .airwatch-marker.selected .halo {
+    fill: none;
+    stroke: var(--aw-sel);
+    stroke-width: 1.25;
   }
 `;
 }
