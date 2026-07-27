@@ -809,10 +809,16 @@ function cardStyles() {
     z-index: 1000 !important;
   }
 
+  .airwatch-marker.selected .plane-shape {
+    filter: drop-shadow(0 0 3px var(--aw-sel));
+  }
+
   .airwatch-marker.selected path {
     fill: var(--aw-sel);
     opacity: 1;
-    stroke: none;
+    paint-order: stroke;
+    stroke: var(--aw-out);
+    stroke-width: 2;
   }
 
   .airwatch-marker.selected .halo {
