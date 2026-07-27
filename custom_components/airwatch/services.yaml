@@ -1,0 +1,21 @@
+select_target:
+  fields:
+    entry_id:
+      required: false
+      selector:
+        text:
+    aircraft_id:
+      required: false
+      selector:
+        text:
+    flight_id:
+      required: false
+      selector:
+        text:
+
+clear_selection:
+  fields:
+    entry_id:
+      required: false
+      selector:
+        text:

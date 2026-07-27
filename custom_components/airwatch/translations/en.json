@@ -1,0 +1,17 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Airwatch",
+        "description": "Choose the default map center and optional airport context.",
+        "data": {
+          "name": "Name",
+          "location": "Map center",
+          "radius_km": "Radius",
+          "zoom": "Default zoom",
+          "airport_code": "Airport code"
+        }
+      }
+    }
+  }
+}

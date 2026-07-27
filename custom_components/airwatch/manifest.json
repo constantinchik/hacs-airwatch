@@ -1,0 +1,11 @@
+{
+  "domain": "airwatch",
+  "name": "Airwatch",
+  "codeowners": ["@constantinchik"],
+  "config_flow": true,
+  "documentation": "https://github.com/constantinchik/hacs-airawatch",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/constantinchik/hacs-airawatch/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
