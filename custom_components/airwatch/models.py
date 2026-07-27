@@ -31,7 +31,9 @@ class Aircraft:
     vertical_rate_fpm: int | None = None
     on_ground: bool = False
     origin: str | None = None
+    origin_name: str | None = None
     destination: str | None = None
+    destination_name: str | None = None
     updated_at: str = field(default_factory=utc_now_iso)
 
     def to_dict(self) -> dict[str, object]:

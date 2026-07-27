@@ -27,6 +27,7 @@ const VERSION = "0.1.0";
 export class AirwatchMapCard extends LitElement {
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private _config: AirwatchCardConfig = { type: "custom:airwatch-map-card", entity: DEFAULT_ENTITY };
+  @state() private _paused = false;
   private _map?: LeafletMap;
   private _markers = new Map<string, Marker>();
   private _resizeObserver?: ResizeObserver;
@@ -50,7 +51,7 @@ export class AirwatchMapCard extends LitElement {
 
   protected updated(): void {
     this._ensureMap();
-    this._renderMarkers();
+    if (!this._paused) this._renderMarkers();
   }
 
   public override disconnectedCallback(): void {
@@ -68,19 +69,27 @@ export class AirwatchMapCard extends LitElement {
     const count = attrs.aircraft?.length ?? 0;
     const selected = attrs.selected_aircraft_id;
 
+    const plane = attrs.aircraft?.find((item) => item.id === selected);
+    const label = plane ? plane.callsign || plane.registration || plane.id : null;
+
     return html`
       <ha-card>
         <header>
           <div>
             <h2>${this._config.title || "Airwatch Map"}</h2>
-            <p>${count} aircraft nearby${selected ? ` · selected ${selected}` : ""}</p>
+            <p>${count} aircraft nearby${label ? ` · ${label}` : ""}${this._paused ? " · paused" : ""}</p>
           </div>
-          <button @click=${this._clearSelection}>Clear</button>
+          <button @click=${this._togglePause}>${this._paused ? "Resume" : "Pause"}</button>
         </header>
         <div id="map" class="map"></div>
         ${!entity ? html`<div class="empty">Configure the Airwatch overview entity.</div>` : null}
       </ha-card>
     `;
+  }
+
+  private _togglePause(): void {
+    this._paused = !this._paused;
+    if (!this._paused) this._renderMarkers();
   }
 
   private _ensureMap(): void {
@@ -158,15 +167,15 @@ export class AirwatchMapCard extends LitElement {
 
   private async _selectAircraft(plane: Aircraft): Promise<void> {
     const attrs = getAttributes(getEntity(this.hass, this._config.entity));
+    if (attrs.selected_aircraft_id === plane.id) {
+      await this.hass?.callService("airwatch", "clear_selection");
+      return;
+    }
     const match = matchForAircraft(attrs.matches ?? [], plane.id);
     await this.hass?.callService("airwatch", "select_target", {
       aircraft_id: plane.id,
       flight_id: match?.flight_id,
     });
-  }
-
-  private async _clearSelection(): Promise<void> {
-    await this.hass?.callService("airwatch", "clear_selection");
   }
 
   static override get styles() {
@@ -361,17 +370,42 @@ function renderRoute(origin?: string | null, destination?: string | null): Templ
 
 function renderAircraftDetails(plane: Aircraft): TemplateResult {
   const items: Array<[string, string]> = [];
-  if (plane.registration) items.push(["Registration", plane.registration]);
-  if (plane.icao24) items.push(["ICAO24", plane.icao24.toUpperCase()]);
   if (plane.altitude_ft != null) {
     items.push(["Altitude", plane.on_ground ? "On ground" : `${plane.altitude_ft.toLocaleString()} ft`]);
   }
-  if (plane.ground_speed_kt != null) items.push(["Speed", `${plane.ground_speed_kt} kt`]);
+  if (plane.ground_speed_kt != null) {
+    items.push(["Speed", `${plane.ground_speed_kt} kt · ${Math.round(plane.ground_speed_kt * 1.852)} km/h`]);
+  }
   if (plane.track_deg != null) items.push(["Heading", `${plane.track_deg}°`]);
   if (plane.vertical_rate_fpm) {
     items.push(["Vertical", `${plane.vertical_rate_fpm > 0 ? "+" : ""}${plane.vertical_rate_fpm} fpm`]);
   }
-  return renderDetails(items);
+  if (plane.registration) items.push(["Registration", plane.registration]);
+  if (plane.icao24) items.push(["ICAO24", plane.icao24.toUpperCase()]);
+  return html`${renderRouteDetails(plane)}${renderDetails(items)}`;
+}
+
+function renderRouteDetails(plane: Aircraft): TemplateResult | null {
+  if (!plane.origin && !plane.destination) return null;
+  return html`
+    <span class="details-route">
+      ${renderEndpoint("From", plane.origin, plane.origin_name)}
+      <svg class="route-arrow" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 12h14m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      ${renderEndpoint("To", plane.destination, plane.destination_name, true)}
+    </span>
+  `;
+}
+
+function renderEndpoint(label: string, code?: string | null, name?: string | null, end = false): TemplateResult {
+  return html`
+    <span class="endpoint ${end ? "end" : ""}">
+      <small>${label}</small>
+      <span class="airport-name">${name || code || "Unknown"}</span>
+      ${name && code ? html`<span class="airport-code">${code}</span>` : null}
+    </span>
+  `;
 }
 
 function renderFlightDetails(flight: ScheduledFlight, aircraft?: Aircraft): TemplateResult {
@@ -528,6 +562,52 @@ function cardStyles() {
   .time {
     font-variant-numeric: tabular-nums;
     font-weight: 700;
+  }
+
+  .details-route {
+    align-items: center;
+    border-top: 1px solid var(--divider-color);
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr auto 1fr;
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+
+  .details-route .route-arrow {
+    height: 18px;
+    width: 18px;
+  }
+
+  .endpoint {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .endpoint.end {
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  .endpoint small {
+    color: var(--secondary-text-color);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .airport-name {
+    font-weight: 650;
+    line-height: 1.25;
+  }
+
+  .airport-code {
+    color: var(--secondary-text-color);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
   }
 
   .details {

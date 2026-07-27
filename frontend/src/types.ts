@@ -53,7 +53,9 @@ export interface Aircraft {
   vertical_rate_fpm?: number | null;
   on_ground?: boolean;
   origin?: string | null;
+  origin_name?: string | null;
   destination?: string | null;
+  destination_name?: string | null;
   updated_at?: string;
 }
 
