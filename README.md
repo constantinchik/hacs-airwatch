@@ -5,7 +5,7 @@
 
 Airwatch is a HACS-installable Home Assistant flight tracker with synchronized Lovelace cards for live aircraft and airport flight lists.
 
-Status: early scaffold. The integration currently ships a demo provider and the frontend card shell. Real live-aircraft and schedule providers are intentionally still open.
+Status: live aircraft via the OpenSky Network (anonymous or OAuth2 API credentials), plus a demo provider for development. Schedule providers (per-airport website adapters) are the next milestone.
 
 ## Goals
 
@@ -46,19 +46,15 @@ cards:
 - Home Assistant integration domain: `airwatch`
 - Frontend: TypeScript, Lit, Vite, Leaflet
 - Backend: provider-neutral Python models, `DataUpdateCoordinator`, config flow, one overview sensor
-- Initial provider: demo data only
+- Live provider: OpenSky Network (`extended=1` state vectors, bounding box from the configured radius)
 
-## Provider Plan
+## Providers
 
 Airwatch intentionally does not use FlightRadar24.
 
-Likely live aircraft provider candidates:
+Live aircraft come from the **OpenSky Network**. Anonymous access works out of the box but is limited to 400 API credits/day, so polling is clamped to 240 s. Adding OpenSky API client credentials (free account, 4000 credits/day) in the integration options lowers the clamp to 30 s. Emergency squawks (7500/7600/7700) are flagged on the aircraft.
 
-- OpenSky Network
-- airplanes.live / adsb.lol compatible APIs
-- self-hosted tar1090/readsb JSON feeds
-
-Likely schedule provider candidates:
+Schedule provider candidates (next milestone, per-airport website adapters):
 
 - AeroDataBox
 - Aviationstack

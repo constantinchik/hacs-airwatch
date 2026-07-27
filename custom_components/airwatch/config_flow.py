@@ -14,21 +14,31 @@ from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
     TextSelector,
     TextSelectorConfig,
+    TextSelectorType,
 )
 
 from .const import (
     CONF_AIRPORT_CODE,
     CONF_NAME,
+    CONF_OPENSKY_CLIENT_ID,
+    CONF_OPENSKY_CLIENT_SECRET,
+    CONF_PROVIDER,
     CONF_RADIUS_KM,
     CONF_SCAN_INTERVAL_SECONDS,
     CONF_ZOOM,
     DEFAULT_NAME,
+    DEFAULT_PROVIDER,
     DEFAULT_RADIUS_KM,
     DEFAULT_SCAN_INTERVAL_SECONDS,
     DEFAULT_ZOOM,
     DOMAIN,
+    PROVIDER_DEMO,
+    PROVIDER_OPENSKY,
 )
 
 CONF_LOCATION = "location"
@@ -121,6 +131,24 @@ class AirwatchOptionsFlow(OptionsFlow):
                         CONF_AIRPORT_CODE,
                         default=opts.get(CONF_AIRPORT_CODE, entry.data.get(CONF_AIRPORT_CODE, "")),
                     ): TextSelector(TextSelectorConfig()),
+                    vol.Required(
+                        CONF_PROVIDER,
+                        default=opts.get(CONF_PROVIDER, DEFAULT_PROVIDER),
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            options=[PROVIDER_OPENSKY, PROVIDER_DEMO],
+                            mode=SelectSelectorMode.DROPDOWN,
+                            translation_key=CONF_PROVIDER,
+                        )
+                    ),
+                    vol.Optional(
+                        CONF_OPENSKY_CLIENT_ID,
+                        default=opts.get(CONF_OPENSKY_CLIENT_ID, ""),
+                    ): TextSelector(TextSelectorConfig()),
+                    vol.Optional(
+                        CONF_OPENSKY_CLIENT_SECRET,
+                        default=opts.get(CONF_OPENSKY_CLIENT_SECRET, ""),
+                    ): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
                 }
             ),
         )

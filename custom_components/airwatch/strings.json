@@ -23,8 +23,19 @@
           "radius_km": "Radius",
           "zoom": "Default zoom",
           "scan_interval_seconds": "Live update interval",
-          "airport_code": "Airport code"
+          "airport_code": "Airport code",
+          "provider": "Live data provider",
+          "opensky_client_id": "OpenSky API client ID",
+          "opensky_client_secret": "OpenSky API client secret"
         }
+      }
+    }
+  },
+  "selector": {
+    "provider": {
+      "options": {
+        "opensky": "OpenSky Network (live)",
+        "demo": "Demo data"
       }
     }
   },

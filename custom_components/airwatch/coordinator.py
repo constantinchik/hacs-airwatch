@@ -8,21 +8,30 @@ from datetime import timedelta
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
     CONF_AIRPORT_CODE,
+    CONF_OPENSKY_CLIENT_ID,
+    CONF_OPENSKY_CLIENT_SECRET,
+    CONF_PROVIDER,
     CONF_RADIUS_KM,
     CONF_SCAN_INTERVAL_SECONDS,
     CONF_ZOOM,
+    DEFAULT_PROVIDER,
     DEFAULT_RADIUS_KM,
     DEFAULT_SCAN_INTERVAL_SECONDS,
     DEFAULT_ZOOM,
     DOMAIN,
+    MIN_INTERVAL_OPENSKY_ANON,
+    MIN_INTERVAL_OPENSKY_AUTH,
+    PROVIDER_DEMO,
 )
 from .models import Aircraft, AirwatchData, FlightMatch, ScheduledFlight
 from .provider import AirwatchProvider
 from .providers.demo import DemoProvider
+from .providers.opensky import OpenSkyProvider
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,15 +41,51 @@ class AirwatchCoordinator(DataUpdateCoordinator[AirwatchData]):
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         self.entry = entry
-        self.provider: AirwatchProvider = DemoProvider()
+        self.provider = self._build_provider(hass)
         self.selected_aircraft_id: str | None = None
         self.selected_flight_id: str | None = None
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=self.scan_interval_seconds),
+            update_interval=timedelta(seconds=self.effective_interval_seconds),
         )
+
+    def _build_provider(self, hass: HomeAssistant) -> AirwatchProvider:
+        if self.provider_kind == PROVIDER_DEMO:
+            return DemoProvider()
+        return OpenSkyProvider(
+            async_get_clientsession(hass),
+            client_id=self._option(CONF_OPENSKY_CLIENT_ID),
+            client_secret=self._option(CONF_OPENSKY_CLIENT_SECRET),
+        )
+
+    def _option(self, key: str) -> str | None:
+        value = self.entry.options.get(key, self.entry.data.get(key))
+        return str(value).strip() or None if value else None
+
+    @property
+    def provider_kind(self) -> str:
+        return self._option(CONF_PROVIDER) or DEFAULT_PROVIDER
+
+    @property
+    def effective_interval_seconds(self) -> int:
+        """Clamp polling to what the provider's rate limits can sustain."""
+        configured = self.scan_interval_seconds
+        if not isinstance(self.provider, OpenSkyProvider):
+            return configured
+        minimum = (
+            MIN_INTERVAL_OPENSKY_AUTH if self.provider.authenticated else MIN_INTERVAL_OPENSKY_ANON
+        )
+        if configured < minimum:
+            _LOGGER.info(
+                "Raising OpenSky update interval from %ss to %ss to respect API credits "
+                "(add credentials or increase the interval to silence this)",
+                configured,
+                minimum,
+            )
+            return minimum
+        return configured
 
     @property
     def latitude(self) -> float:
@@ -105,7 +150,10 @@ class AirwatchCoordinator(DataUpdateCoordinator[AirwatchData]):
                     "radius_km": self.radius_km,
                     "zoom": self.zoom,
                 },
-                provider_status={"live": self.provider.name, "schedules": self.provider.name},
+                provider_status={
+                    "live": self.provider.name,
+                    "schedules": self.provider.name if schedules else "none",
+                },
             )
         )
 
