@@ -5,7 +5,7 @@
 
 Airwatch is a HACS-installable Home Assistant flight tracker with synchronized Lovelace cards for live aircraft and airport flight lists.
 
-Status: live aircraft via the OpenSky Network (anonymous or OAuth2 API credentials), plus a demo provider for development. Schedule providers (per-airport website adapters) are the next milestone.
+Status: live aircraft via the OpenSky Network (anonymous or OAuth2 API credentials), with optional aircraft metadata and adsbdb route enrichment, plus a demo provider for development. Real schedule adapters remain the next milestone; schedule models and demo schedule cards already exist. The map already projects motion between updates and draws selected-aircraft route segments; these are not recorded flight tracks.
 
 ## Goals
 
@@ -54,7 +54,7 @@ Airwatch intentionally does not use FlightRadar24.
 
 Live aircraft come from the **OpenSky Network**. Anonymous access works out of the box but is limited to 400 API credits/day, so polling is clamped to 240 s. Adding OpenSky API client credentials (free account, 4000 credits/day) in the integration options lowers the clamp to 30 s. Emergency squawks (7500/7600/7700) are flagged on the aircraft.
 
-Schedule provider candidates (next milestone, per-airport website adapters):
+Potential future schedule sources (not implemented adapters):
 
 - AeroDataBox
 - Aviationstack
@@ -63,18 +63,14 @@ Schedule provider candidates (next milestone, per-airport website adapters):
 
 ## Development
 
-Backend checks:
-
-```bash
-python -m pytest
-python -m ruff check .
-```
-
-Frontend checks:
+For initial frontend dependency setup:
 
 ```bash
 cd frontend
 npm install
-npm run type-check
-npm run build
 ```
+
+See [development guidance](docs/development.md) for source ownership, data contracts,
+current limitations and the backend pytest/Ruff and frontend type-check/build commands.
+See [deployment guidance](docs/deployment.md) when planning an approved installation
+update; frontend assets and backend components have different delivery requirements.
